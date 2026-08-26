@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกการออก Site & เบิกค่าเดินทาง V4.0 (Full Toll Plaza & Analytics)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #cbd5e1;
+            --success: #16a34a;
+            --danger: #ef4444;
+            --warning: #d97706;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: var(--text); }
+        .container { max-width: 1100px; margin: auto; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+        h2, h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .full-width { grid-column: span 2; }
+        label { font-weight: bold; font-size: 13px; color: #475569; display: block; margin-bottom: 6px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 14px; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+        
+        .section-title { background: #eff6ff; padding: 10px 14px; font-weight: bold; color: #1d4ed8; border-radius: 6px; margin: 15px 0 10px 0; grid-column: span 2; border-left: 4px solid #2563eb; display: flex; justify-content: space-between; align-items: center; }
+        .section-title.project-title { background: #e0e7ff; color: #3730a3; border-left-color: #4f46e5; }
+        .section-title.parking-title { background: #fef3c7; color: #b45309; border-left-color: #d97706; }
+
+        .parking-box { background: #fffbe3; border: 1px solid #fef3c7; border-radius: 8px; padding: 15px; grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 12px; }
+        .toll-item { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: grid; grid-template-columns: 2fr 1fr 2fr 40px; gap: 10px; align-items: center; }
+        .btn-add { background: #2563eb; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .btn-add:hover { background: #1d4ed8; }
+        .btn-remove { background: var(--danger); color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: center; }
+        .btn-edit { background: #f59e0b; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 4px; }
+        .preview-img { max-height: 50px; max-width: 100px; border-radius: 4px; border: 1px solid var(--border); display: none; margin-top: 4px; }
+        
+        .btn-map { background: #2563eb; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; text-decoration: none; display: inline-block; box-sizing: border-box; }
+        .btn-submit { background: var(--success); color: white; border: none; padding: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; width: 100%; margin-top: 15px; }
+        .btn-submit:hover { background: #15803d; }
+        .btn-cancel { background: #64748b; color: white; border: none; padding: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; width: 100%; margin-top: 10px; display: none; }
+        .btn-export { background: #0284c7; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-clear { background: #64748b; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-card { background: #f1f5f9; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0; }
+        .stat-card .value { font-size: 18px; font-weight: bold; color: var(--primary); margin-top: 5px; }
+        .stat-card .label { font-size: 11px; color: #64748b; font-weight: bold; }
+
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
+        .chart-box { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 15px; }
+
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 15px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; }
+        th { background: #0f172a; color: white; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .actions-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
+
+        @media (max-width: 768px) {
+            .form-grid, .stats-grid, .charts-grid, .filter-grid, .parking-box { grid-template-columns: 1fr; }
+            .toll-item { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- DataList รวมรายชื่อด่านทางด่วนทั้งหมดในประเทศไทย -->
+<datalist id="tollPlazaList">
+    <option value="ทางพิเศษเฉลิมมหานคร - ดินแดง"></option>
+    <option value="ทางพิเศษเฉลิมมหานคร - เพชรบุรี"></option>
+    <option value="ทางพิเศษเฉลิมมหานคร - สุขุมวิท"></option>
+    <option value="ทางพิเศษเฉลิมมหานคร - พระราม 4-1"></option>
+    <option value="ทางพิเศษเฉลิมมหานคร - พระราม 4-2"></option>
+    <option value="ทางพิเศษเฉลิมมหานคร - ท่าเรือ 1"></option>
+    <option value="ทางพิเศษเฉลิมมหานคร - อาจณรงค์"></option>
+    <option value="ทางพิเศษเฉลิมมหานคร - บางนา"></option>
+    <option value="ทางพิเศษเฉลิมมหานคร - สาธุประดิษฐ์ 1"></option>
+    <option value="ทางพิเศษเฉลิมมหานคร - สุขสวัสดิ์"></option>
+
+    <option value="ทางพิเศษศรีรัช - ประชาชื่น"></option>
+    <option value="ทางพิเศษศรีรัช - รัชดาภิเษก"></option>
+    <option value="ทางพิเศษศรีรัช - บางซื่อ"></option>
+    <option value="ทางพิเศษศรีรัช - อโศก 1"></option>
+    <option value="ทางพิเศษศรีรัช - อโศก 2"></option>
+    <option value="ทางพิเศษศรีรัช - พระราม 9"></option>
+    <option value="ทางพิเศษศรีรัช - ศรีนครินทร์"></option>
+
+    <option value="ทางพิเศษฉลองรัช - จตุโชติ"></option>
+    <option value="ทางพิเศษฉลองรัช - รามอินทรา"></option>
+    <option value="ทางพิเศษฉลองรัช - ลาดพร้าว"></option>
+    <option value="ทางพิเศษฉลองรัช - พระโขนง"></option>
+    <option value="ทางพิเศษฉลองรัช - พัฒนาการ"></option>
+
+    <option value="ทางพิเศษบูรพาวิถี - ชลบุรี"></option>
+    <option value="ทางพิเศษบูรพาวิถี - บางนา"></option>
+    <option value="ทางพิเศษบูรพาวิถี - บางแก้ว"></option>
+
+    <option value="ทางพิเศษอุดรรัถยา - เมืองทองธานี"></option>
+    <option value="ทางพิเศษอุดรรัถยา - ศรีสมาน"></option>
+    <option value="ทางพิเศษอุดรรัถยา - บางพูน"></option>
+
+    <option value="มอเตอร์เวย์ สาย 9 - บางปะอิน"></option>
+    <option value="มอเตอร์เวย์ สาย 9 - ธัญบุรี"></option>
+    <option value="มอเตอร์เวย์ สาย 9 - ทับช้าง"></option>
+</datalist>
+
+<div class="container">
+    <div class="card">
+        <h2 id="formHeader">บันทึกการออก Site & เบิกค่าเดินทาง V4.0 (Lantro Thailand)</h2>
+        <form id="claimForm" class="form-grid">
+            <input type="hidden" id="editRecordId" value="">
+            
+            <div class="form-group">
+                <label>วันที่ออก Site</label>
+                <input type="date" id="visitDate" required>
+            </div>
+
+            <div class="form-group">
+                <label>ค้นหา Site ปลายทาง (Google Maps Autocomplete)</label>
+                <input type="text" id="siteInput" placeholder="พิมพ์ชื่อสถานที่..." autocomplete="off" required>
+            </div>
+
+            <div class="section-title project-title">
+                <span>📁 โครงการและวัตถุประสงค์การเข้าปฏิบัติงาน (Project Details)</span>
+            </div>
+
+            <div class="form-group">
+                <label>ชื่อโครงการ / Project Name</label>
+                <input type="text" id="projectName" placeholder="เช่น One Bangkok Phase 1, True Network Upgrade ฯลฯ" required>
+            </div>
+
+            <div class="form-group">
+                <label>ลักษณะงาน / สิ่งที่ไปทำ (Scope of Work)</label>
+                <input type="text" id="taskDetail" placeholder="เช่น เดินสาย Fiber, ติดตั้ง Rack/Switch ฯลฯ" required>
+            </div>
+
+            <div class="full-width">
+                <a id="mapBtn" href="#" target="_blank" class="btn-map" style="display:none;">📍 กดเพื่อเปิด Google Maps นำทาง & ดูระยะทางจาก Lantro</a>
+            </div>
+
+            <div class="form-group">
+                <label>ระยะทางเที่ยวเดียว (กม.) [คำนวณอัตโนมัติจาก Google Maps]</label>
+                <input type="number" id="oneWayDist" step="0.1" placeholder="คำนวณอัตโนมัติ..." oninput="calcTotal()" required>
+            </div>
+
+            <div class="form-group">
+                <label>ระยะทางรวม ไป-กลับ (กม.)</label>
+                <input type="number" id="roundDist" readonly style="background:#f1f5f9;">
+            </div>
+
+            <div class="full-width" style="color:#1e3a8a; font-weight:bold; text-align:right; font-size: 15px;">
+                ค่าน้ำมันสะสม (4 บาท/กม.): <span id="gasCostText">0</span> บาท
+            </div>
+
+            <div class="section-title">
+                <span>🚗 ทางด่วนขาไป</span>
+                <button type="button" class="btn-add" onclick="addTollRow('out')">+ เพิ่มด่านขาไป</button>
+            </div>
+            <div class="full-width" id="outTollContainer"></div>
+
+            <div class="section-title">
+                <span>🚙 ทางด่วนขากลับ</span>
+                <button type="button" class="btn-add" onclick="addTollRow('in')">+ เพิ่มด่านขากลับ</button>
+            </div>
+            <div class="full-width" id="inTollContainer"></div>
+
+            <div class="section-title parking-title">
+                <span>🅿️ ค่าบริการจอดรถ (Parking Fee)</span>
+            </div>
+            <div class="parking-box">
+                <div>
+                    <label>จอดไปกี่ชั่วโมง (ชม.)</label>
+                    <input type="number" id="parkHours" placeholder="เช่น 3.5" step="0.5">
+                </div>
+                <div>
+                    <label>ค่าจอดรถจริง (บาท)</label>
+                    <input type="number" id="parkCost" placeholder="0" oninput="calcTotal()">
+                </div>
+                <div>
+                    <label>แนบรูปสลิป / บัตรจอดรถ</label>
+                    <input type="file" id="parkImg" accept="image/*" onchange="previewImage(this, 'parkImgPreview')">
+                    <img id="parkImgPreview" class="preview-img" alt="หลักฐานค่าจอด">
+                </div>
+                <div style="grid-column: span 3;">
+                    <label>หมายเหตุค่าจอดรถ (ถ้ามี)</label>
+                    <input type="text" id="parkRemark" placeholder="เช่น แสตมป์บัตรแล้วลดเหลือ 100 บาท ฯลฯ">
+                </div>
+            </div>
+
+            <div class="full-width" style="background:#f0fdf4; padding:15px; border-radius:8px; border:1px solid #bbf7d0; margin-top:10px;">
+                <h3 style="margin:0; color:#166534;">💰 ยอดรวมเบิกสุทธิ: <span id="grandTotal">0</span> บาท</h3>
+                <small style="color:#365314;">(ค่าน้ำมัน + ค่าทางด่วนทุกด่าน + ค่าจอดรถจริง)</small>
+            </div>
+
+            <button type="button" id="submitBtn" class="btn-submit" onclick="saveData()">💾 บันทึกข้อมูลลงตาราง</button>
+            <button type="button" id="cancelBtn" class="btn-cancel" onclick="resetForm()">❌ ยกเลิกการแก้ไข</button>
+        </form>
+    </div>
+
+    <!-- DASHBOARD & CHARTS CARD -->
+    <div class="card">
+        <h2>📊 รายงานสรุปภาพรวมการเดินทาง & ค่าใช้จ่าย</h2>
+        <div style="margin-bottom: 15px;">
+            <label>เลือกมุมมองสรุปผลตามช่วงเวลา:</label>
+            <select id="timeRange" onchange="updateDashboard()" style="max-width: 250px;">
+                <option value="all">ทั้งหมด</option>
+                <option value="week">สัปดาห์นี้</option>
+                <option value="month">เดือนนี้</option>
+            </select>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">รวมเบิกสุทธิ</div>
+                <div class="value" id="statTotalMoney">0 ฿</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">ค่าน้ำมันรวม</div>
+                <div class="value" id="statGasCost">0 ฿</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">ค่าทางด่วนรวม</div>
+                <div class="value" id="statTollCost">0 ฿</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">ค่าจอดรถรวม</div>
+                <div class="value" id="statParkCost" style="color:#d97706;">0 ฿</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">ระยะทางรวม</div>
+                <div class="value" id="statDistance">0 กม.</div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-box">
+                <h4 style="margin:0 0 10px 0; text-align:center;">Site ที่ไปบ่อยที่สุด (จำแนกตามจำนวนครั้ง)</h4>
+                <canvas id="siteChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h4 style="margin:0 0 10px 0; text-align:center;">สัดส่วนค่าใช้จ่าย (น้ำมัน vs ทางด่วน vs จอดรถ)</h4>
+                <canvas id="costChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGS & FILTER CARD -->
+    <div class="card">
+        <h2>📜 ประวัติบันทึกการออก Site & ระบบ Filter ข้อมูล</h2>
+        <div class="filter-grid">
+            <div>
+                <label>ตั้งแต่วันที่</label>
+                <input type="date" id="filterStartDate" onchange="applyFilter()">
+            </div>
+            <div>
+                <label>ถึงวันที่</label>
+                <input type="date" id="filterEndDate" onchange="applyFilter()">
+            </div>
+            <div>
+                <label>ค้นหาตามชื่อ Site / Project</label>
+                <input type="text" id="filterSiteName" placeholder="พิมพ์ชื่อ Site หรือ Project..." oninput="applyFilter()">
+            </div>
+            <div>
+                <button class="btn-clear" onclick="resetFilter()">รีเซ็ต Filter</button>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="summaryTable">
+                <thead>
+                    <tr>
+                        <th>วันที่</th>
+                        <th>Project / งานที่ทำ</th>
+                        <th>Site ปลายทาง</th>
+                        <th>ระยะทาง</th>
+                        <th>ค่าน้ำมัน</th>
+                        <th>ค่าทางด่วน</th>
+                        <th>ค่าจอดรถ (ชม.)</th>
+                        <th>รวมเบิกสุทธิ</th>
+                        <th>จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="actions-bar">
+            <span id="filterSummaryText" style="font-weight:bold; font-size:13px; color:#475569;">แสดงทั้งหมด 0 รายการ</span>
+            <button class="btn-export" onclick="exportToCSV()">📊 Export รายการที่เลือกเป็น Excel / CSV</button>
+        </div>
+    </div>
+</div>
+
+<!-- SDK Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB7Y8PdUjb0PxdQcHJsUH6fAtbKGGGxYOc&libraries=places&callback=initGoogleMaps" async defer></script>
+
+<script>
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6s0rYoHnvq1_dAVQ1uIxFS5JcvnMBhR6wZIOFlf-O_IjffWSSyeMenGWVe2YEjSlqpg/exec';
+    const LANTRO_LOCATION = "Lantro (Thailand) Co., Ltd";
+    const RATE_PER_KM = 4;
+    let tollCounter = 0;
+    let siteChartInstance = null;
+    let costChartInstance = null;
+    let distanceService;
+
+    document.getElementById('visitDate').valueAsDate = new Date();
+
+    window.onload = function() {
+        addTollRow('out');
+        addTollRow('in');
+        renderApp();
+    };
+
+    function initGoogleMaps() {
+        const input = document.getElementById('siteInput');
+        const autocomplete = new google.maps.places.Autocomplete(input, {
+            componentRestrictions: { country: 'th' }
+        });
+
+        distanceService = new google.maps.DistanceMatrixService();
+
+        autocomplete.addListener('place_changed', function () {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) return;
+
+            const mapUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(LANTRO_LOCATION)}&destination=${encodeURIComponent(place.formatted_address || place.name)}&travelmode=driving`;
+            const mapBtn = document.getElementById('mapBtn');
+            mapBtn.href = mapUrl;
+            mapBtn.style.display = 'block';
+
+            calculateDistance(place.geometry.location);
+        });
+    }
+
+    function calculateDistance(destinationLocation) {
+        distanceService.getDistanceMatrix({
+            origins: [LANTRO_LOCATION],
+            destinations: [destinationLocation],
+            travelMode: google.maps.TravelMode.DRIVING,
+            unitSystem: google.maps.UnitSystem.METRIC
+        }, function (response, status) {
+            if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
+                const distanceInMeters = response.rows[0].elements[0].distance.value;
+                const distanceInKm = (distanceInMeters / 1000).toFixed(1);
+                
+                document.getElementById('oneWayDist').value = distanceInKm;
+                calcTotal();
+            }
+        });
+    }
+
+    function addTollRow(type, tollData = null) {
+        tollCounter++;
+        const container = document.getElementById(type === 'out' ? 'outTollContainer' : 'inTollContainer');
+        const div = document.createElement('div');
+        div.className = 'toll-item';
+        div.id = `toll_row_${tollCounter}`;
+
+        const nameValue = tollData ? tollData.name : '';
+        const priceValue = tollData ? tollData.price : '';
+
+        div.innerHTML = `
+            <div>
+                <input type="text" class="${type}-toll-name" value="${nameValue}" list="tollPlazaList" placeholder="พิมพ์/เลือกด่านทางด่วน...">
+            </div>
+            <div>
+                <input type="number" class="${type}-toll-price" value="${priceValue}" placeholder="ราคา (บาท)" oninput="calcTotal()">
+            </div>
+            <div>
+                <input type="file" class="${type}-toll-img" accept="image/*" onchange="previewImage(this, 'img_${tollCounter}')">
+                <img id="img_${tollCounter}" class="preview-img" alt="สลิป">
+            </div>
+            <div>
+                <button type="button" class="btn-remove" onclick="removeTollRow('toll_row_${tollCounter}')">✕</button>
+            </div>
+        `;
+        container.appendChild(div);
+    }
+
+    function removeTollRow(rowId) {
+        const row = document.getElementById(rowId);
+        if (row) { row.remove(); calcTotal(); }
+    }
+
+    function previewImage(input, imgId) {
+        const img = document.getElementById(imgId);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => { img.src = e.target.result; img.style.display = 'block'; };
+            reader.readAsDataURL(input.files[0]);
+        } else { img.style.display = 'none'; }
+    }
+
+    function calcTotal() {
+        const oneWay = parseFloat(document.getElementById('oneWayDist').value) || 0;
+        const round = oneWay * 2;
+        document.getElementById('roundDist').value = round.toFixed(1);
+
+        const gasCost = round * RATE_PER_KM;
+        document.getElementById('gasCostText').innerText = gasCost.toLocaleString();
+
+        let totalToll = 0;
+        document.querySelectorAll('.out-toll-price, .in-toll-price').forEach(el => {
+            totalToll += parseFloat(el.value) || 0;
+        });
+
+        const parkCost = parseFloat(document.getElementById('parkCost').value) || 0;
+        const grandTotal = gasCost + totalToll + parkCost;
+        document.getElementById('grandTotal').innerText = grandTotal.toLocaleString();
+    }
+
+    // ฟังก์ชันบีบอัดภาพอัตโนมัติ ป้องกันเครื่องค้างและส่งข้อมูลเข้า Google Sheet สำเร็จ
+    async function helperBase64(fileInput) {
+        if (!fileInput || !fileInput.files || !fileInput.files[0]) return "";
+        return new Promise((resolve) => {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    resolve(compressedDataUrl);
+                };
+                img.src = e.target.result;
+            };
+            reader.onerror = () => resolve("");
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function saveData() {
+        const editId = document.getElementById('editRecordId').value;
+        const date = document.getElementById('visitDate').value;
+        const site = document.getElementById('siteInput').value.trim();
+        const projectName = document.getElementById('projectName').value.trim();
+        const taskDetail = document.getElementById('taskDetail').value.trim();
+        const oneWay = parseFloat(document.getElementById('oneWayDist').value) || 0;
+
+        if (!date || !site || !projectName || !taskDetail || oneWay <= 0) {
+            alert('กรุณากรอกข้อมูล วันที่, Site, ชื่อ Project, ลักษณะงาน และระยะทางให้ครบถ้วน');
+            return;
+        }
+
+        const btnSubmit = document.getElementById('submitBtn');
+        const originalText = btnSubmit.innerText;
+        btnSubmit.innerText = '⏳ กำลังอัปโหลดรูปและบันทึก...';
+        btnSubmit.disabled = true;
+
+        const roundDist = oneWay * 2;
+        const gasCost = roundDist * RATE_PER_KM;
+
+        const parkImgFile = document.getElementById('parkImg');
+        const parkImgBase64 = await helperBase64(parkImgFile);
+
+        let outTolls = [];
+        const outItems = document.querySelectorAll('#outTollContainer .toll-item');
+        for (let el of outItems) {
+            const imgInput = el.querySelector('.out-toll-img');
+            const b64 = await helperBase64(imgInput);
+            outTolls.push({
+                name: el.querySelector('.out-toll-name').value,
+                price: parseFloat(el.querySelector('.out-toll-price').value) || 0,
+                imgBase64: b64
+            });
+        }
+
+        let inTolls = [];
+        const inItems = document.querySelectorAll('#inTollContainer .toll-item');
+        for (let el of inItems) {
+            const imgInput = el.querySelector('.in-toll-img');
+            const b64 = await helperBase64(imgInput);
+            inTolls.push({
+                name: el.querySelector('.in-toll-name').value,
+                price: parseFloat(el.querySelector('.in-toll-price').value) || 0,
+                imgBase64: b64
+            });
+        }
+
+        let totalToll = 0;
+        outTolls.forEach(t => totalToll += t.price);
+        inTolls.forEach(t => totalToll += t.price);
+        
+        const parkHours = parseFloat(document.getElementById('parkHours').value) || 0;
+        const parkCost = parseFloat(document.getElementById('parkCost').value) || 0;
+        const parkRemark = document.getElementById('parkRemark').value || '';
+
+        const grandTotal = gasCost + totalToll + parkCost;
+
+        const recordPayload = {
+            id: editId ? Number(editId) : Date.now(),
+            date,
+            projectName,
+            taskDetail,
+            site,
+            oneWay,
+            roundDist,
+            gasCost,
+            outTolls,
+            inTolls,
+            totalToll,
+            parkHours,
+            parkCost,
+            parkRemark,
+            parkImgBase64,
+            grandTotal
+        };
+
+        let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+        if (editId) {
+            const index = logs.findIndex(r => r.id == editId);
+            if (index !== -1) logs[index] = recordPayload;
+        } else {
+            logs.push(recordPayload);
+        }
+        localStorage.setItem('lantro_logs_v4', JSON.stringify(logs));
+
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(recordPayload)
+        })
+        .then(() => {
+            alert('บันทึกข้อมูลและส่งเข้าระบบ Google Sheet เรียบร้อยแล้ว!');
+            resetForm();
+            renderApp();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('บันทึกลงเครื่องแล้ว แต่เกิดข้อผิดพลาดในการส่งข้อมูล');
+            resetForm();
+            renderApp();
+        })
+        .finally(() => {
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = originalText;
+        });
+    }
+
+    function editRecord(id) {
+        const logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+        const target = logs.find(r => r.id == id);
+        if (!target) return;
+
+        document.getElementById('editRecordId').value = target.id;
+        document.getElementById('formHeader').innerText = '✏️ แก้ไขรายการบันทึกการออก Site';
+        document.getElementById('visitDate').value = target.date;
+        document.getElementById('siteInput').value = target.site;
+        document.getElementById('projectName').value = target.projectName;
+        document.getElementById('taskDetail').value = target.taskDetail;
+        document.getElementById('oneWayDist').value = target.oneWay || (target.roundDist / 2);
+
+        document.getElementById('outTollContainer').innerHTML = '';
+        document.getElementById('inTollContainer').innerHTML = '';
+
+        if (target.outTolls && target.outTolls.length > 0) {
+            target.outTolls.forEach(t => addTollRow('out', t));
+        } else { addTollRow('out'); }
+
+        if (target.inTolls && target.inTolls.length > 0) {
+            target.inTolls.forEach(t => addTollRow('in', t));
+        } else { addTollRow('in'); }
+
+        document.getElementById('parkHours').value = target.parkHours || '';
+        document.getElementById('parkCost').value = target.parkCost || '';
+        document.getElementById('parkRemark').value = target.parkRemark || '';
+
+        document.getElementById('submitBtn').innerText = '💾 บันทึกการแก้ไข';
+        document.getElementById('cancelBtn').style.display = 'block';
+
+        calcTotal();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetForm() {
+        document.getElementById('editRecordId').value = '';
+        document.getElementById('formHeader').innerText = 'บันทึกการออก Site & เบิกค่าเดินทาง V4.0 (Lantro Thailand)';
+        document.getElementById('claimForm').reset();
+        document.getElementById('visitDate').valueAsDate = new Date();
+        document.getElementById('outTollContainer').innerHTML = '';
+        document.getElementById('inTollContainer').innerHTML = '';
+        addTollRow('out');
+        addTollRow('in');
+        document.getElementById('submitBtn').innerText = '💾 บันทึกข้อมูลลงตาราง';
+        document.getElementById('cancelBtn').style.display = 'none';
+        document.getElementById('mapBtn').style.display = 'none';
+        calcTotal();
+    }
+
+    function deleteRecord(id) {
+        if (confirm('คุณต้องการลบรายการบันทึกนี้ใช่หรือไม่?')) {
+            let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+            logs = logs.filter(r => r.id !== id);
+            localStorage.setItem('lantro_logs_v4', JSON.stringify(logs));
+            renderApp();
+        }
+    }
+
+    function getFilteredLogs() {
+        let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+        const startDate = document.getElementById('filterStartDate').value;
+        const endDate = document.getElementById('filterEndDate').value;
+        const searchText = document.getElementById('filterSiteName').value.toLowerCase().trim();
+
+        return logs.filter(r => {
+            let matchDate = true;
+            if (startDate) matchDate = matchDate && r.date >= startDate;
+            if (endDate) matchDate = matchDate && r.date <= endDate;
+
+            let matchSearch = true;
+            if (searchText) {
+                const siteMatch = r.site ? r.site.toLowerCase().includes(searchText) : false;
+                const projMatch = r.projectName ? r.projectName.toLowerCase().includes(searchText) : false;
+                const taskMatch = r.taskDetail ? r.taskDetail.toLowerCase().includes(searchText) : false;
+                matchSearch = siteMatch || projMatch || taskMatch;
+            }
+
+            return matchDate && matchSearch;
+        });
+    }
+
+    function applyFilter() { renderTable(); }
+    function resetFilter() {
+        document.getElementById('filterStartDate').value = '';
+        document.getElementById('filterEndDate').value = '';
+        document.getElementById('filterSiteName').value = '';
+        renderTable();
+    }
+
+    function renderTable() {
+        const logs = getFilteredLogs();
+        const tbody = document.querySelector('#summaryTable tbody');
+        tbody.innerHTML = '';
+
+        logs.forEach(r => {
+            const parkText = r.parkCost > 0 ? `${r.parkCost.toLocaleString()} ฿ (${r.parkHours || 0} ชม.)` : '-';
+            const projInfo = `<b>${r.projectName || 'N/A'}</b><br><small style="color:#64748b;">${r.taskDetail || ''}</small>`;
+            
+            const row = `<tr>
+                <td>${r.date}</td>
+                <td>${projInfo}</td>
+                <td><b>${r.site}</b></td>
+                <td>${r.roundDist} กม.</td>
+                <td>${r.gasCost.toLocaleString()} ฿</td>
+                <td>${r.totalToll.toLocaleString()} ฿</td>
+                <td>${parkText}</td>
+                <td><b style="color:#16a34a;">${r.grandTotal.toLocaleString()} ฿</b></td>
+                <td>
+                    <button type="button" class="btn-edit" onclick="editRecord(${r.id})">แก้ไข</button>
+                    <button type="button" style="background:#ef4444; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="deleteRecord(${r.id})">ลบ</button>
+                </td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+
+        document.getElementById('filterSummaryText').innerText = `แสดงทั้งหมด ${logs.length} รายการ`;
+    }
+
+    function updateDashboard() {
+        const logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+        const range = document.getElementById('timeRange').value;
+        const now = new Date();
+
+        const filtered = logs.filter(r => {
+            if (range === 'all') return true;
+            const rDate = new Date(r.date);
+            if (range === 'week') {
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(now.getDate() - 7);
+                return rDate >= oneWeekAgo;
+            }
+            if (range === 'month') {
+                return rDate.getMonth() === now.getMonth() && rDate.getFullYear() === now.getFullYear();
+            }
+            return true;
+        });
+
+        let totalMoney = 0, gasCost = 0, tollCost = 0, parkCost = 0, totalDist = 0;
+        let siteCounts = {};
+
+        filtered.forEach(r => {
+            totalMoney += r.grandTotal;
+            gasCost += r.gasCost;
+            tollCost += r.totalToll;
+            parkCost += (r.parkCost || 0);
+            totalDist += r.roundDist;
+
+            siteCounts[r.site] = (siteCounts[r.site] || 0) + 1;
+        });
+
+        document.getElementById('statTotalMoney').innerText = `${totalMoney.toLocaleString()} ฿`;
+        document.getElementById('statGasCost').innerText = `${gasCost.toLocaleString()} ฿`;
+        document.getElementById('statTollCost').innerText = `${tollCost.toLocaleString()} ฿`;
+        document.getElementById('statParkCost').innerText = `${parkCost.toLocaleString()} ฿`;
+        document.getElementById('statDistance').innerText = `${totalDist.toLocaleString()} กม.`;
+
+        const siteLabels = Object.keys(siteCounts);
+        const siteData = Object.values(siteCounts);
+
+        if (siteChartInstance) siteChartInstance.destroy();
+        const ctx1 = document.getElementById('siteChart').getContext('2d');
+        siteChartInstance = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: siteLabels.length > 0 ? siteLabels : ['ไม่มีข้อมูล'],
+                datasets: [{
+                    label: 'จำนวนครั้งที่ไป',
+                    data: siteData.length > 0 ? siteData : [0],
+                    backgroundColor: '#2563eb'
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+        });
+
+        if (costChartInstance) costChartInstance.destroy();
+        const ctx2 = document.getElementById('costChart').getContext('2d');
+        costChartInstance = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['ค่าน้ำมันรวม', 'ค่าทางด่วนรวม', 'ค่าจอดรถรวม'],
+                datasets: [{
+                    data: [gasCost, tollCost, parkCost],
+                    backgroundColor: ['#0284c7', '#f59e0b', '#d97706']
+                }]
+            },
+            options: { responsive: true }
+        });
+    }
+
+    function exportToCSV() {
+        const logs = getFilteredLogs();
+        if (logs.length === 0) {
+            alert('ไม่มีรายการข้อมูลที่จะ Export');
+            return;
+        }
+
+        let csv = '\uFEFFวันที่,ชื่อ Project,ลักษณะงานที่ทำ,Site ปลายทาง,ระยะทางไปกลับ (กม.),ค่าน้ำมัน (บาท),ค่าทางด่วนรวม (บาท),ค่าจอดรถ (บาท),จอดกี่ชั่วโมง,หมายเหตุค่าจอด,ยอดรวมเบิกสุทธิ (บาท)\n';
+        logs.forEach(r => {
+            csv += `${r.date},"${r.projectName || ''}","${r.taskDetail || ''}","${r.site}",${r.roundDist},${r.gasCost},${r.totalToll},${r.parkCost || 0},${r.parkHours || 0},"${r.parkRemark || ''}",${r.grandTotal}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Lantro_Site_Claim_V4.0_${new Date().toISOString().slice(0,10)}.csv`;
+        link.click();
+    }
+
+    function renderApp() {
+        renderTable();
+        updateDashboard();
+    }
+</script>
+
+</body>
+</html>
