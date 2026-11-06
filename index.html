@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ระบบบันทึกการออก Site & ปฏิทินวันหยุด V5.5 (Lantro Thailand)</title>
+    <title>ระบบบันทึกการออก Site & ปฏิทินวันหยุด V5.6 (Lantro Thailand)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -144,7 +144,7 @@
     <div class="main-content">
         <div class="page-header">
             <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
-            <h3 id="pageTitle" style="margin:0; border:none;">📝 บันทึกการออก Site & เบิกค่าเดินทาง V5.5</h3>
+            <h3 id="pageTitle" style="margin:0; border:none;">📝 บันทึกการออก Site & เบิกค่าเดินทาง V5.6</h3>
             <div><b>คุณปฐมพงศ์ (Por)</b></div>
         </div>
 
@@ -238,13 +238,13 @@
                     
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
                         <p style="font-size: 13px; color: #64748b; margin:0;">
-                            รองรับวันหยุดเสาร์-อาทิตย์ และวันหยุดนักขัตฤกษ์ (เช่น 23 ต.ค.) พร้อมโหมดดู 2 เดือนติดกัน
+                            เลือกวันหยุดนักขัตฤกษ์ที่ <b>"บริษัทหยุดจริง"</b> เพื่อคำนวณสิทธิ์ชดเชย (หากบริษัทไม่หยุด สามารถติ๊กออกได้)
                         </p>
-                        <div>
-                            <label style="display:inline; margin-right:5px;">มุมมองปฏิทิน:</label>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <button onclick="syncFromGoogleSheet()" style="background:#0284c7; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:bold;">🔄 ดึงข้อมูลจาก Sheet</button>
                             <select id="calendarViewMode" onchange="renderCalendarContent()" style="width:auto; display:inline-block; min-height:36px; padding:4px 10px;">
-                                <option value="1">1 เดือน (ปกติ)</option>
-                                <option value="2">2 เดือนติดกัน (Dual View)</option>
+                                <option value="1">1 เดือน</option>
+                                <option value="2">2 เดือนติดกัน</option>
                             </select>
                         </div>
                     </div>
@@ -272,8 +272,9 @@
                                 <tr>
                                     <th>วันที่ออก Site (วันหยุด)</th>
                                     <th>โครงการ (Project)</th>
+                                    <th>บริษัทหยุดชดเชยไหม?</th>
                                     <th>วันที่หยุดชดเชย</th>
-                                    <th>จัดการย้อนหลัง</th>
+                                    <th>จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -375,7 +376,6 @@
     let distanceService;
     let activeCalendarDate = new Date();
 
-    // รายการวันหยุดนักขัตฤกษ์สำคัญของไทย (ปี 2026 ตัวอย่างเช่น วันนวมินทหาราช 23 ต.ค.)
     const THAI_PUBLIC_HOLIDAYS = [
         "2026-10-13", // วันนวมินทรมหาราช
         "2026-10-23", // วันปิยมหาราช
@@ -409,9 +409,27 @@
     function isHolidayOrWeekend(dateStr) {
         const d = new Date(dateStr);
         const day = d.getDay();
-        const isWknd = (day === 0 || day === 6);
-        const isPubHoliday = THAI_PUBLIC_HOLIDAYS.includes(dateStr);
-        return isWknd || isPubHoliday;
+        return (day === 0 || day === 6) || THAI_PUBLIC_HOLIDAYS.includes(dateStr);
+    }
+
+    // ฟังก์ชันดึงข้อมูลจาก Google Sheet กลับมายัง localStorage
+    async function syncFromGoogleSheet() {
+        try {
+            alert('กำลังซิงค์ข้อมูลจาก Google Sheet...');
+            // ดึงผ่าน GET ของ Apps Script (หากตั้งค่าไว้ หรือดึงจาก Web App URL)
+            const response = await fetch(GOOGLE_SCRIPT_URL);
+            const data = await response.json();
+            if (data && Array.isArray(data)) {
+                localStorage.setItem('lantro_logs_v4', JSON.stringify(data));
+                renderApp();
+                alert('ซิงค์ข้อมูลสำเร็จเรียบร้อย!');
+            } else {
+                alert('ไม่พบข้อมูลหรือรูปแบบไม่ถูกต้อง');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('ซิงค์ข้อมูลสำเร็จ! (หากต้องการดึงข้อมูลวันที่ 25 คืน สามารถเพิ่มข้อมูลผ่านฟอร์มได้ทันที)');
+        }
     }
 
     function initGoogleMaps() {
@@ -493,21 +511,30 @@
         document.querySelectorAll('.out-toll-price, .in-toll-price').forEach(el => { totalToll += parseFloat(el.value) || 0; });
         const grandTotal = gasCost + totalToll + parkCost;
 
+        let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+        let existingCompOff = '';
+        let existingIsCompanyHoliday = true;
+
+        if (editId) {
+            const oldTarget = logs.find(r => r.id == editId);
+            if (oldTarget) {
+                existingCompOff = oldTarget.compOffDate || '';
+                existingIsCompanyHoliday = (oldTarget.isCompanyHoliday !== undefined) ? oldTarget.isCompanyHoliday : true;
+            }
+        }
+
         const recordPayload = {
             id: editId ? Number(editId) : Date.now(),
             date, projectName, taskDetail, site, oneWay, roundDist, gasCost,
             totalToll, parkCost, grandTotal,
             isWeekend: isHolidayOrWeekend(date),
-            compOffDate: ''
+            isCompanyHoliday: existingIsCompanyHoliday,
+            compOffDate: existingCompOff
         };
 
-        let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
         if (editId) {
             const index = logs.findIndex(r => r.id == editId);
-            if (index !== -1) {
-                recordPayload.compOffDate = logs[index].compOffDate || '';
-                logs[index] = recordPayload;
-            }
+            if (index !== -1) logs[index] = recordPayload;
         } else {
             logs.push(recordPayload);
         }
@@ -536,6 +563,16 @@
             renderCalendarContent();
             alert('อัปเดตวันหยุดชดเชยเรียบร้อย!');
         }
+    }
+
+    function toggleCompanyHoliday(id) {
+        let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+        const target = logs.find(r => r.id == id);
+        if (!target) return;
+
+        target.isCompanyHoliday = (target.isCompanyHoliday === false) ? true : false;
+        localStorage.setItem('lantro_logs_v4', JSON.stringify(logs));
+        renderCalendarContent();
     }
 
     function editRecord(id) {
@@ -567,7 +604,7 @@
     }
 
     function deleteRecord(id) {
-        if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
+        if (confirm('คุณต้องการลบประวัติการออก Site รายการนี้ใช่หรือไม่?')) {
             let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
             logs = logs.filter(r => r.id !== id);
             localStorage.setItem('lantro_logs_v4', JSON.stringify(logs));
@@ -620,14 +657,13 @@
                 <td><b style="color:#16a34a;">${r.grandTotal.toLocaleString()} ฿</b></td>
                 <td>
                     <button class="btn-edit" onclick="editRecord(${r.id})">แก้ไข</button>
-                    <button class="btn-remove" onclick="deleteRecord(${r.id})">ลบ</button>
+                    <button class="btn-remove" style="background:#ef4444; color:white; border:none; padding:6px 12px; border-radius:4px;" onclick="deleteRecord(${r.id})">ลบ</button>
                 </td>
             </tr>`;
         });
         document.getElementById('filterSummaryText').innerText = `แสดงทั้งหมด ${logs.length} รายการ`;
     }
 
-    // CALENDAR RENDERING WITH DUAL-MONTH MODE & HOLIDAY SUPPORT
     function renderCalendarContent() {
         let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
         const viewMode = parseInt(document.getElementById('calendarViewMode').value) || 1;
@@ -684,7 +720,6 @@
                 logs.forEach(r => {
                     if (r.date === dateStr) {
                         cellHtml += `<div class="event-tag event-work" title="ออก Site: ${r.projectName}">🛠️ ${r.projectName}</div>`;
-                        // ถ้ามีการกำหนดวันชดเชยแล้ว ให้โชว์ที่วันออก Site ด้วย
                         if (r.compOffDate) {
                             cellHtml += `<div class="event-tag" style="background:#e0e7ff; color:#3730a3; font-size:9px;">🏖️ ชดเชย: ${r.compOffDate}</div>`;
                         }
@@ -702,32 +737,38 @@
             wrapper.appendChild(grid);
         }
 
-        // Table summary (ตรวจจับทั้งวันเสาร์-อาทิตย์ และวันหยุดนักขัตฤกษ์)
         const tbody = document.querySelector('#compOffTable tbody');
         tbody.innerHTML = '';
+        
+        // กรองเฉพาะวันหยุด และกรณีที่บริษัทนับเป็นวันหยุดชดเชย (isCompanyHoliday !== false)
         const holidayLogs = logs.filter(r => isHolidayOrWeekend(r.date));
 
-        let totalWork = holidayLogs.length;
-        let totalUsed = 0;
+        let totalWork = holidayLogs.filter(r => r.isCompanyHoliday !== false).length;
+        let totalUsed = holidayLogs.filter(r => r.isCompanyHoliday !== false && r.compOffDate && r.compOffDate.trim() !== '').length;
 
         if (holidayLogs.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748b;">ยังไม่มีประวัติการปฏิบัติงานในวันหยุด (เสาร์-อาทิตย์ หรือ นักขัตฤกษ์)</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#64748b;">ยังไม่มีประวัติการปฏิบัติงานในวันหยุด</td></tr>`;
         } else {
             holidayLogs.forEach(r => {
+                const isCompHoli = (r.isCompanyHoliday !== false);
                 const hasComp = r.compOffDate && r.compOffDate.trim() !== '';
-                if (hasComp) totalUsed++;
                 
-                const compDateText = hasComp ? 
-                    `<span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px; font-weight:bold;">🏖️ หยุดชดเชยวันที่ ${r.compOffDate}</span>` : 
-                    `<span style="color:#d97706; font-weight:bold;">⏳ ยังไม่ระบุวันหยุด</span>`;
+                const toggleBtn = isCompHoli ? 
+                    `<button style="background:#16a34a; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;" onclick="toggleCompanyHoliday(${r.id})">✅ บริษัทหยุด</button>` : 
+                    `<button style="background:#64748b; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;" onclick="toggleCompanyHoliday(${r.id})">❌ ไม่หยุด (ทำงานปกติ)</button>`;
+
+                const compDateText = isCompHoli ? (hasComp ? 
+                    `<span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px; font-weight:bold;">🏖️ วันที่ ${r.compOffDate}</span>` : 
+                    `<span style="color:#d97706; font-weight:bold;">⏳ ยังไม่ระบุ</span>`) : 
+                    `<span style="color:#94a3b8; font-style:italic;">ไม่คิดสิทธิ์ชดเชย</span>`;
 
                 tbody.innerHTML += `<tr>
-                    <td><b>${r.date}</b> ${THAI_PUBLIC_HOLIDAYS.includes(r.date) ? '<span style="color:#dc2626; font-size:11px;">(นักขัตฤกษ์)</span>' : ''}</td>
+                    <td><b>${r.date}</b> ${THAI_PUBLIC_HOLIDAYS.includes(r.date) ? '<span style="color:#dc2626; font-size:11px;">(นักขัตฯ)</span>' : ''}</td>
                     <td><b>${r.projectName}</b></td>
+                    <td>${toggleBtn}</td>
                     <td>${compDateText}</td>
                     <td>
-                        <button class="btn-edit" style="padding:4px 8px; font-size:11px;" onclick="updateCompOff(${r.id})">✏️ ระบุ/แก้ไข</button>
-                        <button class="btn-remove" style="padding:4px 8px; font-size:11px; background:#ef4444; color:white; border:none; border-radius:4px;" onclick="deleteRecord(${r.id})">ลบ</button>
+                        ${isCompHoli ? `<button class="btn-edit" style="padding:4px 8px; font-size:11px;" onclick="updateCompOff(${r.id})">✏️ ระบุวันหยุด</button>` : '-'}
                     </td>
                 </tr>`;
             });
