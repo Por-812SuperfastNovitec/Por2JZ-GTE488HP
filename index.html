@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ระบบบันทึกการออก Site & ปฏิทินวันหยุด V5.4 (Lantro Thailand)</title>
+    <title>ระบบบันทึกการออก Site & ปฏิทินวันหยุด V5.5 (Lantro Thailand)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -60,7 +60,7 @@
         .toll-item { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; width: 100%; }
 
         .btn-add { background: #2563eb; color: white; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%; text-align: center; margin-top: 5px; }
-        .btn-remove { background: var(--danger); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; }
+        .btn-remove { background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: auto; text-align: center; }
         .btn-edit { background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .btn-map, .btn-submit, .btn-cancel { border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; display: block; font-size: 16px; }
         .btn-map { background: #2563eb; color: white; text-decoration: none; }
@@ -69,8 +69,6 @@
         .btn-export, .btn-clear { border: none; padding: 12px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
         .btn-export { background: #0284c7; width: 100%; margin-top: 10px; }
         .btn-clear { background: #64748b; width: 100%; }
-
-        .preview-img { max-height: 60px; max-width: 100%; border-radius: 4px; border: 1px solid var(--border); display: none; margin-top: 4px; }
         
         .stats-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
         .stat-card { background: #f1f5f9; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0; flex: 1 1 calc(50% - 10px); min-width: 130px; }
@@ -87,7 +85,7 @@
         th { background: #0f172a; color: white; }
 
         /* Calendar & Modal Styling */
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
         .calendar-day-head { font-weight: bold; padding: 8px; background: #e2e8f0; border-radius: 4px; font-size: 12px; }
         .calendar-day-head.sat { color: #2563eb; background: #dbeafe; }
@@ -96,6 +94,7 @@
         .calendar-cell { min-height: 95px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; background: white; display: flex; flex-direction: column; align-items: flex-start; font-size: 11px; cursor: pointer; transition: background 0.2s; }
         .calendar-cell.weekend-sat { background: #f0fdf4; }
         .calendar-cell.weekend-sun { background: #fff5f5; }
+        .calendar-cell.holiday-bg { background: #fef2f2; border: 1px dashed #ef4444; }
         .calendar-cell:hover { opacity: 0.85; }
         
         .calendar-cell .day-number { font-weight: bold; font-size: 12px; margin-bottom: 4px; }
@@ -145,7 +144,7 @@
     <div class="main-content">
         <div class="page-header">
             <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
-            <h3 id="pageTitle" style="margin:0; border:none;">📝 บันทึกการออก Site & เบิกค่าเดินทาง V5.4</h3>
+            <h3 id="pageTitle" style="margin:0; border:none;">📝 บันทึกการออก Site & เบิกค่าเดินทาง V5.5</h3>
             <div><b>คุณปฐมพงศ์ (Por)</b></div>
         </div>
 
@@ -236,9 +235,19 @@
             <div id="tab-calendar" class="tab-page">
                 <div class="card">
                     <h2>📅 ปฏิทินการทำงานวันหยุด & สรุปสิทธิ์วันหยุดชดเชย</h2>
-                    <p style="font-size: 13px; color: #64748b;">
-                        คลิกที่วันที่ในปฏิทินเพื่อดูรายละเอียดงาน — ช่องวันเสาร์และอาทิตย์จะไฮไลต์สีพื้นอ่อนๆ เพื่อให้สังเกตง่าย
-                    </p>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+                        <p style="font-size: 13px; color: #64748b; margin:0;">
+                            รองรับวันหยุดเสาร์-อาทิตย์ และวันหยุดนักขัตฤกษ์ (เช่น 23 ต.ค.) พร้อมโหมดดู 2 เดือนติดกัน
+                        </p>
+                        <div>
+                            <label style="display:inline; margin-right:5px;">มุมมองปฏิทิน:</label>
+                            <select id="calendarViewMode" onchange="renderCalendarContent()" style="width:auto; display:inline-block; min-height:36px; padding:4px 10px;">
+                                <option value="1">1 เดือน (ปกติ)</option>
+                                <option value="2">2 เดือนติดกัน (Dual View)</option>
+                            </select>
+                        </div>
+                    </div>
 
                     <div class="stats-grid" style="margin: 15px 0;">
                         <div class="stat-card"><div class="label">ทำงานวันหยุดรวม</div><div class="value" id="statWeekendWork">0 วัน</div></div>
@@ -252,14 +261,16 @@
                         <button onclick="changeCalendarMonth(1)" style="padding:6px 12px; cursor:pointer; font-weight:bold;">เดือนถัดไป ►</button>
                     </div>
 
-                    <div class="calendar-grid" id="calendarGrid" style="margin-bottom: 20px;"></div>
+                    <div id="calendarContainerWrapper">
+                        <div class="calendar-grid" id="calendarGrid" style="margin-bottom: 20px;"></div>
+                    </div>
 
-                    <h3 style="margin-top:20px; font-size:1rem;">📋 รายการปฏิบัติงานเสาร์-อาทิตย์ & กำหนดวันหยุดย้อนหลัง</h3>
+                    <h3 style="margin-top:20px; font-size:1rem;">📋 รายการปฏิบัติงานวันหยุด (เสาร์-อาทิตย์ & นักขัตฤกษ์) & กำหนดวันหยุดชดเชย</h3>
                     <div class="table-responsive">
                         <table id="compOffTable">
                             <thead>
                                 <tr>
-                                    <th>วันที่ออก Site (เสาร์-อาทิตย์)</th>
+                                    <th>วันที่ออก Site (วันหยุด)</th>
                                     <th>โครงการ (Project)</th>
                                     <th>วันที่หยุดชดเชย</th>
                                     <th>จัดการย้อนหลัง</th>
@@ -364,12 +375,21 @@
     let distanceService;
     let activeCalendarDate = new Date();
 
+    // รายการวันหยุดนักขัตฤกษ์สำคัญของไทย (ปี 2026 ตัวอย่างเช่น วันนวมินทหาราช 23 ต.ค.)
+    const THAI_PUBLIC_HOLIDAYS = [
+        "2026-10-13", // วันนวมินทรมหาราช
+        "2026-10-23", // วันปิยมหาราช
+        "2026-12-05", // วันพ่อแห่งชาติ
+        "2026-12-10", // วันรัฐธรรมนูญ
+        "2026-12-31"  // วันสิ้นปี
+    ];
+
     document.getElementById('visitDate').valueAsDate = new Date();
 
     window.onload = function() {
         addTollRow('out');
         addTollRow('in');
-        fetchDataFromGoogleSheet(); // ดึงข้อมูลจาก Google Sheet อัตโนมัติเมื่อเปิดเว็บ
+        renderApp();
     };
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('show'); }
@@ -386,20 +406,12 @@
         if (tabId === 'tab-history') updateDashboard();
     }
 
-    // ฟังก์ชันดึงข้อมูลจาก Google Sheet (อ่านจากเว็บแอปหรือ Public CSV)
-    async function fetchDataFromGoogleSheet() {
-        try {
-            // ดึงข้อมูลผ่าน Apps Script (หรือถ้าคุณปอใช้ Google Sheet แบบ Publish to Web เป็น CSV ก็ดึงตรงได้)
-            // ตัวอย่างนี้ดึงจาก localStorage ดำเนินการสำรองก่อน แล้วดึงจาก Sheet มาทับ/รวม
-            let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
-            
-            // สมมติหากมี API หรือดึงผ่าน Apps Script GET
-            // สำหรับตอนนี้ระบบจะอ่านจาก localStorage ที่ซิงค์ไว้ และหากต้องการดึงสดจาก Google Sheet สามารถเพิ่ม doGet ใน Apps Script ได้
-            renderApp();
-        } catch (err) {
-            console.error('ไม่สามารถโหลดข้อมูลจาก Google Sheet ได้', err);
-            renderApp();
-        }
+    function isHolidayOrWeekend(dateStr) {
+        const d = new Date(dateStr);
+        const day = d.getDay();
+        const isWknd = (day === 0 || day === 6);
+        const isPubHoliday = THAI_PUBLIC_HOLIDAYS.includes(dateStr);
+        return isWknd || isPubHoliday;
     }
 
     function initGoogleMaps() {
@@ -481,14 +493,11 @@
         document.querySelectorAll('.out-toll-price, .in-toll-price').forEach(el => { totalToll += parseFloat(el.value) || 0; });
         const grandTotal = gasCost + totalToll + parkCost;
 
-        const dayOfWeek = new Date(date).getDay();
-        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-
         const recordPayload = {
             id: editId ? Number(editId) : Date.now(),
             date, projectName, taskDetail, site, oneWay, roundDist, gasCost,
             totalToll, parkCost, grandTotal,
-            isWeekend: isWeekend,
+            isWeekend: isHolidayOrWeekend(date),
             compOffDate: ''
         };
 
@@ -611,73 +620,100 @@
                 <td><b style="color:#16a34a;">${r.grandTotal.toLocaleString()} ฿</b></td>
                 <td>
                     <button class="btn-edit" onclick="editRecord(${r.id})">แก้ไข</button>
-                    <button class="btn-remove" style="padding:6px 12px; width:auto;" onclick="deleteRecord(${r.id})">ลบ</button>
+                    <button class="btn-remove" onclick="deleteRecord(${r.id})">ลบ</button>
                 </td>
             </tr>`;
         });
         document.getElementById('filterSummaryText').innerText = `แสดงทั้งหมด ${logs.length} รายการ`;
     }
 
+    // CALENDAR RENDERING WITH DUAL-MONTH MODE & HOLIDAY SUPPORT
     function renderCalendarContent() {
         let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
-        const grid = document.getElementById('calendarGrid');
-        grid.innerHTML = '';
+        const viewMode = parseInt(document.getElementById('calendarViewMode').value) || 1;
+        const wrapper = document.getElementById('calendarContainerWrapper');
+        wrapper.innerHTML = '';
 
         const year = activeCalendarDate.getFullYear();
         const month = activeCalendarDate.getMonth();
         const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-        document.getElementById('calendarMonthYear').innerText = `${monthNames[month]} ${year + 543}`;
-
-        ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'].forEach((h, idx) => {
-            const cls = idx === 0 ? 'sun' : (idx === 6 ? 'sat' : '');
-            grid.innerHTML += `<div class="calendar-day-head ${cls}">${h}</div>`;
-        });
-
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        for (let i = 0; i < firstDay; i++) {
-            grid.innerHTML += `<div class="calendar-cell" style="background:#f8fafc; cursor:default;"></div>`;
+        
+        if (viewMode === 1) {
+            document.getElementById('calendarMonthYear').innerText = `${monthNames[month]} ${year + 543}`;
+        } else {
+            const nextMonth = (month + 1) % 12;
+            const nextYear = month === 11 ? year + 1 : year;
+            document.getElementById('calendarMonthYear').innerText = `${monthNames[month]} ${year + 543} - ${monthNames[nextMonth]} ${nextYear + 543}`;
         }
 
-        for (let d = 1; d <= daysInMonth; d++) {
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            const dayOfWeek = new Date(dateStr).getDay();
-            let weekendClass = '';
-            if (dayOfWeek === 6) weekendClass = 'weekend-sat';
-            if (dayOfWeek === 0) weekendClass = 'weekend-sun';
+        for (let mOffset = 0; mOffset < viewMode; mOffset++) {
+            let targetDate = new Date(year, month + mOffset, 1);
+            let tYear = targetDate.getFullYear();
+            let tMonth = targetDate.getMonth();
 
-            let cellHtml = `<div class="calendar-cell ${weekendClass}" onclick="openDayModal('${dateStr}')"><div class="day-number">${d}</div>`;
+            if (viewMode > 1) {
+                wrapper.innerHTML += `<h4 style="color:#1e3a8a; margin:10px 0 5px 0;">📅 ${monthNames[tMonth]} ${tYear + 543}</h4>`;
+            }
 
-            logs.forEach(r => {
-                if (r.date === dateStr) {
-                    cellHtml += `<div class="event-tag event-work" title="ออก Site: ${r.projectName}">🛠️ ${r.projectName}</div>`;
-                }
-                if (r.compOffDate === dateStr) {
-                    const parentWork = logs.find(item => item.compOffDate === dateStr);
-                    const workName = parentWork ? parentWork.projectName : '';
-                    cellHtml += `<div class="event-tag event-comp" title="หยุดชดเชยของ: ${workName}">🏖️ หยุดชดเชย (${workName})</div>`;
-                }
+            let grid = document.createElement('div');
+            grid.className = 'calendar-grid';
+            grid.style.marginBottom = '20px';
+
+            ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'].forEach((h, idx) => {
+                const cls = idx === 0 ? 'sun' : (idx === 6 ? 'sat' : '');
+                grid.innerHTML += `<div class="calendar-day-head ${cls}">${h}</div>`;
             });
 
-            cellHtml += `</div>`;
-            grid.innerHTML += cellHtml;
+            const firstDay = new Date(tYear, tMonth, 1).getDay();
+            const daysInMonth = new Date(tYear, tMonth + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                grid.innerHTML += `<div class="calendar-cell" style="background:#f8fafc; cursor:default;"></div>`;
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${tYear}-${String(tMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dayOfWeek = new Date(dateStr).getDay();
+                let cellClass = '';
+                if (dayOfWeek === 6) cellClass = 'weekend-sat';
+                if (dayOfWeek === 0) cellClass = 'weekend-sun';
+                if (THAI_PUBLIC_HOLIDAYS.includes(dateStr)) cellClass = 'holiday-bg';
+
+                let cellHtml = `<div class="calendar-cell ${cellClass}" onclick="openDayModal('${dateStr}')"><div class="day-number">${d}</div>`;
+
+                logs.forEach(r => {
+                    if (r.date === dateStr) {
+                        cellHtml += `<div class="event-tag event-work" title="ออก Site: ${r.projectName}">🛠️ ${r.projectName}</div>`;
+                        // ถ้ามีการกำหนดวันชดเชยแล้ว ให้โชว์ที่วันออก Site ด้วย
+                        if (r.compOffDate) {
+                            cellHtml += `<div class="event-tag" style="background:#e0e7ff; color:#3730a3; font-size:9px;">🏖️ ชดเชย: ${r.compOffDate}</div>`;
+                        }
+                    }
+                    if (r.compOffDate === dateStr) {
+                        const parentWork = logs.find(item => item.compOffDate === dateStr);
+                        const workName = parentWork ? parentWork.projectName : '';
+                        cellHtml += `<div class="event-tag event-comp" title="หยุดชดเชยของ: ${workName}">🏖️ หยุดชดเชย (${workName})</div>`;
+                    }
+                });
+
+                cellHtml += `</div>`;
+                grid.innerHTML += cellHtml;
+            }
+            wrapper.appendChild(grid);
         }
 
+        // Table summary (ตรวจจับทั้งวันเสาร์-อาทิตย์ และวันหยุดนักขัตฤกษ์)
         const tbody = document.querySelector('#compOffTable tbody');
         tbody.innerHTML = '';
-        const weekendLogs = logs.filter(r => {
-            const day = new Date(r.date).getDay();
-            return (day === 0 || day === 6);
-        });
+        const holidayLogs = logs.filter(r => isHolidayOrWeekend(r.date));
 
-        let totalWork = weekendLogs.length;
+        let totalWork = holidayLogs.length;
         let totalUsed = 0;
 
-        if (weekendLogs.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748b;">ยังไม่มีประวัติการปฏิบัติงานในวันเสาร์-อาทิตย์</td></tr>`;
+        if (holidayLogs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748b;">ยังไม่มีประวัติการปฏิบัติงานในวันหยุด (เสาร์-อาทิตย์ หรือ นักขัตฤกษ์)</td></tr>`;
         } else {
-            weekendLogs.forEach(r => {
+            holidayLogs.forEach(r => {
                 const hasComp = r.compOffDate && r.compOffDate.trim() !== '';
                 if (hasComp) totalUsed++;
                 
@@ -686,10 +722,13 @@
                     `<span style="color:#d97706; font-weight:bold;">⏳ ยังไม่ระบุวันหยุด</span>`;
 
                 tbody.innerHTML += `<tr>
-                    <td><b>${r.date}</b></td>
+                    <td><b>${r.date}</b> ${THAI_PUBLIC_HOLIDAYS.includes(r.date) ? '<span style="color:#dc2626; font-size:11px;">(นักขัตฤกษ์)</span>' : ''}</td>
                     <td><b>${r.projectName}</b></td>
                     <td>${compDateText}</td>
-                    <td><button class="btn-edit" style="padding:4px 8px; font-size:11px;" onclick="updateCompOff(${r.id})">✏️ ระบุ/แก้ไข</button></td>
+                    <td>
+                        <button class="btn-edit" style="padding:4px 8px; font-size:11px;" onclick="updateCompOff(${r.id})">✏️ ระบุ/แก้ไข</button>
+                        <button class="btn-remove" style="padding:4px 8px; font-size:11px; background:#ef4444; color:white; border:none; border-radius:4px;" onclick="deleteRecord(${r.id})">ลบ</button>
+                    </td>
                 </tr>`;
             });
         }
@@ -711,11 +750,12 @@
             contentDiv.innerHTML = `<p style="color:#64748b;">ไม่มีประวัติการปฏิบัติงานหรือวันหยุดในวันนี้</p>`;
         } else {
             let html = '';
-            dayRecords.forEach((r, idx) => {
+            dayRecords.forEach((r) => {
                 html += `<div style="background:#fef3c7; padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid #fde68a;">
                     <b>🛠️ ออก Site: ${r.projectName}</b><br>
                     - ลักษณะงาน: ${r.taskDetail}<br>
                     - Site: ${r.site}<br>
+                    - วันหยุดชดเชยที่เลือก: <b>${r.compOffDate || 'ยังไม่ระบุ'}</b><br>
                     - ยอดเบิกสุทธิ: <b style="color:#16a34a;">${r.grandTotal.toLocaleString()} ฿</b>
                 </div>`;
             });
@@ -742,7 +782,8 @@
     }
 
     function changeCalendarMonth(delta) {
-        activeCalendarDate.setMonth(activeCalendarDate.getMonth() + delta);
+        const viewMode = parseInt(document.getElementById('calendarViewMode').value) || 1;
+        activeCalendarDate.setMonth(activeCalendarDate.getMonth() + (delta * viewMode));
         renderCalendarContent();
     }
 
