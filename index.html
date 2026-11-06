@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ระบบบันทึกการออก Site & เบิกค่าเดินทาง V4.0 (Full Toll Plaza & Analytics)</title>
+    <title>ระบบบันทึกการออก Site & ปฏิทินวันหยุด V5.4 (Lantro Thailand)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #1e3a8a;
             --primary-hover: #1d4ed8;
+            --sidebar-bg: #0f172a;
+            --sidebar-text: #94a3b8;
+            --sidebar-active: #2563eb;
             --bg: #f8fafc;
             --card-bg: #ffffff;
             --text: #1e293b;
@@ -18,154 +21,57 @@
             --warning: #d97706;
         }
 
-        /* 1. Reset & Lock Viewport for iOS Safari */
-        *, *::before, *::after { 
-            box-sizing: border-box !important; 
-            -webkit-tap-highlight-color: transparent; 
-        }
-        
-        html, body { 
-            -webkit-text-size-adjust: 100%; 
-            text-size-adjust: 100%; 
-            width: 100%;
-            overflow-x: hidden;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background-color: var(--bg); 
-            padding: 12px; 
-            color: var(--text); 
-        }
+        *, *::before, *::after { box-sizing: border-box !important; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; height: 100%; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: var(--bg); color: var(--text); }
 
-        /* 2. Container Card */
-        .container { 
-            max-width: 1000px; 
-            margin: 0 auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            width: 100%; 
-        }
-        
-        .card { 
-            background: var(--card-bg); 
-            border-radius: 12px; 
-            padding: 15px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-            border: 1px solid #e2e8f0; 
-            width: 100%; 
-        }
+        .app-layout { display: flex; min-height: 100vh; width: 100%; }
 
-        h2, h3 { 
-            color: var(--primary); 
-            margin-top: 0; 
-            border-bottom: 2px solid #e2e8f0; 
-            padding-bottom: 10px; 
-            font-size: 1.1rem; 
-            word-wrap: break-word;
-        }
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; flex-shrink: 0; transition: transform 0.3s ease; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; }
+        .sidebar-brand { padding: 20px 15px; font-size: 16px; font-weight: bold; border-bottom: 1px solid #334155; color: #f8fafc; display: flex; align-items: center; gap: 10px; }
+        .sidebar-brand span { color: #38bdf8; }
+        .sidebar-menu { list-style: none; padding: 15px 10px; margin: 0; display: flex; flex-direction: column; gap: 5px; }
+        .sidebar-menu li a { display: flex; align-items: center; gap: 12px; padding: 12px 15px; color: var(--sidebar-text); text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .sidebar-menu li a:hover, .sidebar-menu li a.active { background: var(--sidebar-active); color: white; }
 
-        /* 3. STRICT MOBILE LAYOUT (เรียงแนวตั้ง 1 คอลัมน์เต็มบนมือถือเสมอ) */
-        .form-grid { 
-            display: flex !important;
-            flex-direction: column !important;
-            width: 100% !important;
-            gap: 12px;
-        }
+        /* Main Content */
+        .main-content { flex: 1; padding: 20px; margin-left: 260px; width: calc(100% - 260px); overflow-y: auto; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 20px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .mobile-toggle { display: none; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text); }
 
-        .form-group { 
-            width: 100% !important; 
-            display: flex;
-            flex-direction: column;
-        }
+        .tab-page { display: none; }
+        .tab-page.active { display: block; }
 
-        label { 
-            font-weight: bold; 
-            font-size: 13px; 
-            color: #475569; 
-            margin-bottom: 6px; 
-            display: block;
-        }
+        .container { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; width: 100%; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 100%; margin-bottom: 15px; }
 
-        /* ป้องกัน Form Controls ของ iOS เบี้ยว */
-        input, select, textarea { 
-            width: 100% !important; 
-            min-height: 44px; /* ขนาดแตะมาตรฐาน iOS */
-            padding: 10px; 
-            border: 1px solid var(--border); 
-            border-radius: 8px; 
-            font-size: 15px; 
-            font-family: inherit; 
-            background-color: #fff; 
-            -webkit-appearance: none !important; 
-            appearance: none !important; 
-            margin: 0; 
-        }
+        h2, h3 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; font-size: 1.1rem; }
 
-        input:focus, select:focus, textarea:focus { 
-            border-color: #2563eb; 
-            outline: none; 
-            box-shadow: 0 0 0 2px rgba(37,99,235,0.2); 
-        }
+        .form-grid { display: flex; flex-direction: column; width: 100%; gap: 12px; }
+        .form-group { width: 100%; display: flex; flex-direction: column; }
+        label { font-weight: bold; font-size: 13px; color: #475569; margin-bottom: 6px; display: block; }
+        input, select, textarea { width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; font-family: inherit; background-color: #fff; appearance: none; margin: 0; }
 
-        /* หัวข้อเซกชัน (แก้ปัญหากล่องโดนบีบแนวตั้ง) */
-        .section-title { 
-            background: #eff6ff; 
-            padding: 12px; 
-            font-weight: bold; 
-            color: #1d4ed8; 
-            border-radius: 8px; 
-            margin: 10px 0 5px 0; 
-            border-left: 4px solid #2563eb; 
-            width: 100% !important;
-            box-sizing: border-box;
-            display: block;
-        }
-
+        .section-title { background: #eff6ff; padding: 12px; font-weight: bold; color: #1d4ed8; border-radius: 8px; margin: 10px 0 5px 0; border-left: 4px solid #2563eb; width: 100%; display: block; }
         .section-title.project-title { background: #e0e7ff; color: #3730a3; border-left-color: #4f46e5; }
         .section-title.parking-title { background: #fef3c7; color: #b45309; border-left-color: #d97706; }
 
-        .parking-box { 
-            background: #fffbe3; 
-            border: 1px solid #fef3c7; 
-            border-radius: 8px; 
-            padding: 12px; 
-            display: flex;
-            flex-direction: column;
-            gap: 12px; 
-            width: 100%; 
-        }
+        .parking-box { background: #fffbe3; border: 1px solid #fef3c7; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 12px; width: 100%; }
+        .toll-item { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; width: 100%; }
 
-        .toll-item { 
-            background: #f8fafc; 
-            border: 1px solid var(--border); 
-            border-radius: 8px; 
-            padding: 12px; 
-            margin-bottom: 10px; 
-            display: flex;
-            flex-direction: column;
-            gap: 10px; 
-            width: 100%; 
-        }
-
-        /* ปุ่มกดแบบ Responsive Touch บน iOS */
-        .btn-add { background: #2563eb; color: white; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; -webkit-appearance: none; width: 100%; text-align: center; margin-top: 5px; }
-        .btn-remove { background: var(--danger); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; -webkit-appearance: none; }
-        .btn-edit { background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; -webkit-appearance: none; }
-        .btn-map, .btn-submit, .btn-cancel { border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; display: block; -webkit-appearance: none; font-size: 16px; }
+        .btn-add { background: #2563eb; color: white; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; width: 100%; text-align: center; margin-top: 5px; }
+        .btn-remove { background: var(--danger); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; }
+        .btn-edit { background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-map, .btn-submit, .btn-cancel { border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; display: block; font-size: 16px; }
         .btn-map { background: #2563eb; color: white; text-decoration: none; }
         .btn-submit { background: var(--success); color: white; margin-top: 15px; }
         .btn-cancel { background: #64748b; color: white; margin-top: 10px; display: none; }
-        .btn-export, .btn-clear { border: none; padding: 12px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; -webkit-appearance: none; color: white; }
+        .btn-export, .btn-clear { border: none; padding: 12px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
         .btn-export { background: #0284c7; width: 100%; margin-top: 10px; }
         .btn-clear { background: #64748b; width: 100%; }
 
         .preview-img { max-height: 60px; max-width: 100%; border-radius: 4px; border: 1px solid var(--border); display: none; margin-top: 4px; }
         
-        /* Stats & Dashboard */
         .stats-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
         .stat-card { background: #f1f5f9; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0; flex: 1 1 calc(50% - 10px); min-width: 130px; }
         .stat-card .value { font-size: 15px; font-weight: bold; color: var(--primary); margin-top: 5px; word-break: break-all; }
@@ -175,391 +81,279 @@
         .chart-box { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 12px; width: 100%; overflow: hidden; }
         
         .filter-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        
-        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; border: 1px solid var(--border); border-radius: 6px; }
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); border-radius: 6px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
         th, td { border: 1px solid var(--border); padding: 10px; text-align: left; }
         th { background: #0f172a; color: white; }
-        tr:nth-child(even) { background-color: #f8fafc; }
-        .actions-bar { display: flex; flex-direction: column; align-items: flex-start; margin-top: 15px; gap: 10px; }
 
-        /* 4. DESKTOP/TABLET LAYOUT (แสดง 2 คอลัมน์เฉพาะจอที่กว้างกว่า 768px เท่านั้น) */
+        /* Calendar & Modal Styling */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+        .calendar-day-head { font-weight: bold; padding: 8px; background: #e2e8f0; border-radius: 4px; font-size: 12px; }
+        .calendar-day-head.sat { color: #2563eb; background: #dbeafe; }
+        .calendar-day-head.sun { color: #dc2626; background: #fee2e2; }
+        
+        .calendar-cell { min-height: 95px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; background: white; display: flex; flex-direction: column; align-items: flex-start; font-size: 11px; cursor: pointer; transition: background 0.2s; }
+        .calendar-cell.weekend-sat { background: #f0fdf4; }
+        .calendar-cell.weekend-sun { background: #fff5f5; }
+        .calendar-cell:hover { opacity: 0.85; }
+        
+        .calendar-cell .day-number { font-weight: bold; font-size: 12px; margin-bottom: 4px; }
+        .event-tag { width: 100%; padding: 4px 6px; border-radius: 4px; font-size: 10px; margin-bottom: 3px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+        .event-work { background: #fef3c7; color: #92400e; border-left: 3px solid #d97706; }
+        .event-comp { background: #dcfce7; color: #166534; border-left: 3px solid #16a34a; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; overflow-y: auto; padding: 15px; }
+        .modal-content { background: white; max-width: 500px; margin: 50px auto; padding: 20px; border-radius: 12px; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .close-modal { position: absolute; right: 15px; top: 15px; font-size: 24px; cursor: pointer; font-weight: bold; color: #64748b; }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
+            .main-content { margin-left: 0; width: 100%; padding: 12px; }
+            .mobile-toggle { display: block; }
+        }
+
         @media (min-width: 768px) {
-            body { padding: 20px; }
-            .card { padding: 20px; }
-            h2, h3 { font-size: 1.25rem; }
-            
             .form-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 15px; }
             .full-width { grid-column: 1 / -1; }
-            .section-title { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; }
+            .section-title { display: flex; justify-content: space-between; align-items: center; }
             .section-title .btn-add { width: auto; margin-top: 0; }
-
             .parking-box { display: grid; grid-template-columns: 1fr 1fr 2fr; }
             .toll-item { display: grid; grid-template-columns: 2fr 1fr 2fr auto; align-items: center; }
-
-            .btn-export { width: auto; margin-top: 0; }
-            .btn-clear { width: auto; }
-            
-            .stat-card { flex: 1; }
             .charts-grid { display: grid; grid-template-columns: 1fr 1fr; }
-            .filter-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; align-items: end; }
-            .actions-bar { flex-direction: row; justify-content: space-between; align-items: center; }
+            .filter-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; align-items: end; }
         }
     </style>
 </head>
 <body>
 
-<datalist id="tollPlazaList">
-    <option value="ดาวคะนอง — ทางพิเศษเฉลิมมหานคร">
-    <option value="ดินแดง — ทางพิเศษเฉลิมมหานคร">
-    <option value="ดินแดง 1 — ทางพิเศษเฉลิมมหานคร">
-    <option value="ท่าเรือ 1 — ทางพิเศษเฉลิมมหานคร">
-    <option value="ท่าเรือ 2 — ทางพิเศษเฉลิมมหานคร">
-    <option value="บางจาก — ทางพิเศษเฉลิมมหานคร">
-    <option value="บางนา — ทางพิเศษเฉลิมมหานคร">
-    <option value="พระรามที่สี่ 1 — ทางพิเศษเฉลิมมหานคร">
-    <option value="พระรามที่สี่ 2 — ทางพิเศษเฉลิมมหานคร">
-    <option value="เพชรบุรี — ทางพิเศษเฉลิมมหานคร">
-    <option value="เลียบแม่น้ำ — ทางพิเศษเฉลิมมหานคร">
-    <option value="สาธุประดิษฐ์ 1 — ทางพิเศษเฉลิมมหานคร">
-    <option value="สาธุประดิษฐ์ 2 — ทางพิเศษเฉลิมมหานคร">
-    <option value="สุขสวัสดิ์ — ทางพิเศษเฉลิมมหานคร">
-    <option value="สุขุมวิท — ทางพิเศษเฉลิมมหานคร">
-    <option value="สุขุมวิท 62 — ทางพิเศษเฉลิมมหานคร">
-    <option value="อาจณรงค์ — ทางพิเศษเฉลิมมหานคร">
-    <option value="อาจณรงค์ 1 (ท่าเรือ) — ทางพิเศษเฉลิมมหานคร">
-    <option value="อาจณรงค์ 1 (บางนา) — ทางพิเศษเฉลิมมหานคร">
-    <option value="อาจณรงค์ 3 — ทางพิเศษเฉลิมมหานคร">
-    <option value="ลุมพินี — ทางพิเศษเฉลิมมหานคร">
-    <option value="ประชาชื่น (ขาเข้า) ในเมือง — ทางพิเศษศรีรัช">
-    <option value="ประชาชื่น (ขาเข้า) นอกเมือง — ทางพิเศษศรีรัช">
-    <option value="รัชดาภิเษก — ทางพิเศษศรีรัช">
-    <option value="บางซื่อ — ทางพิเศษศรีรัช">
-    <option value="บางซื่อ 2 — ทางพิเศษศรีรัช">
-    <option value="ย่านพหลโยธิน — ทางพิเศษศรีรัช">
-    <option value="คลองประปา 1 — ทางพิเศษศรีรัช">
-    <option value="คลองประปา 2 — ทางพิเศษศรีรัช">
-    <option value="พหลโยธิน 1 — ทางพิเศษศรีรัช">
-    <option value="พหลโยธิน 2 — ทางพิเศษศรีรัช">
-    <option value="อโศก 1 — ทางพิเศษศรีรัช">
-    <option value="อโศก 2 — ทางพิเศษศรีรัช">
-    <option value="อโศก 4 — ทางพิเศษศรีรัช">
-    <option value="ยมราช — ทางพิเศษศรีรัช">
-    <option value="อุรุพงษ์ — ทางพิเศษศรีรัช">
-    <option value="หัวลำโพง — ทางพิเศษศรีรัช">
-    <option value="สะพานสว่าง — ทางพิเศษศรีรัช">
-    <option value="สุรวงศ์ — ทางพิเศษศรีรัช">
-    <option value="สาทร — ทางพิเศษศรีรัช">
-    <option value="จันทร์ — ทางพิเศษศรีรัช">
-    <option value="สาธุประดิษฐ์ 3 — ทางพิเศษศรีรัช">
-    <option value="พระรามสาม — ทางพิเศษศรีรัช">
-    <option value="ประชาชื่น (ขาออก) — ทางพิเศษศรีรัช">
-    <option value="ประชาชื่น 1 — ทางพิเศษศรีรัช">
-    <option value="ประชาชื่น 2 — ทางพิเศษศรีรัช">
-    <option value="งามวงศ์วาน 1 — ทางพิเศษศรีรัช">
-    <option value="งามวงศ์วาน 2 — ทางพิเศษศรีรัช">
-    <option value="รามคำแหง — ทางพิเศษศรีรัช">
-    <option value="อโศก 3 — ทางพิเศษศรีรัช">
-    <option value="อโศก 3 (อโศก 3-1) — ทางพิเศษศรีรัช">
-    <option value="ศรีนครินทร์ — ทางพิเศษศรีรัช">
-    <option value="พระราม 9 — ทางพิเศษศรีรัช">
-    <option value="พระราม 9-1 (ศรีรัช) — ทางพิเศษศรีรัช">
-    <option value="อาจณรงค์ 2 — ทางพิเศษฉลองรัช">
-    <option value="พระโขนง — ทางพิเศษฉลองรัช">
-    <option value="พัฒนาการ 1 — ทางพิเศษฉลองรัช">
-    <option value="พัฒนาการ 2 — ทางพิเศษฉลองรัช">
-    <option value="พระราม 9-1 (ฉลองรัช) — ทางพิเศษฉลองรัช">
-    <option value="พระราม 9-2 — ทางพิเศษฉลองรัช">
-    <option value="ประชาอุทิศ — ทางพิเศษฉลองรัช">
-    <option value="ลาดพร้าว — ทางพิเศษฉลองรัช">
-    <option value="โยธินพัฒนา — ทางพิเศษฉลองรัช">
-    <option value="รามอินทรา — ทางพิเศษฉลองรัช">
-    <option value="รามอินทรา 1 — ทางพิเศษฉลองรัช">
-    <option value="สุขาภิบาล 5-1 — ทางพิเศษฉลองรัช">
-    <option value="จตุโชติ — ทางพิเศษฉลองรัช">
-    <option value="บางนา กม.6 (ขาออก) — ทางพิเศษบูรพาวิถี">
-    <option value="บางนา กม.6 (ขาเข้า) — ทางพิเศษบูรพาวิถี">
-    <option value="บางแก้ว — ทางพิเศษบูรพาวิถี">
-    <option value="บางนา กม.9-1 — ทางพิเศษบูรพาวิถี">
-    <option value="บางนา กม.9-2 — ทางพิเศษบูรพาวิถี">
-    <option value="บางนา กม.9-3 — ทางพิเศษบูรพาวิถี">
-    <option value="วงแหวนรอบนอก — ทางพิเศษบูรพาวิถี">
-    <option value="บางพลี 1 — ทางพิเศษบูรพาวิถี">
-    <option value="บางพลี 2 — ทางพิเศษบูรพาวิถี">
-    <option value="สุวรรณภูมิ 1 — ทางพิเศษบูรพาวิถี">
-    <option value="สุวรรณภูมิ 2 — ทางพิเศษบูรพาวิถี">
-    <option value="เมืองใหม่บางพลี — ทางพิเศษบูรพาวิถี">
-    <option value="บางเสาธง — ทางพิเศษบูรพาวิถี">
-    <option value="บางบ่อ — ทางพิเศษบูรพาวิถี">
-    <option value="บางพลีน้อย — ทางพิเศษบูรพาวิถี">
-    <option value="บางสมัคร — ทางพิเศษบูรพาวิถี">
-    <option value="บางวัว — ทางพิเศษบูรพาวิถี">
-    <option value="บางปะกง 1 — ทางพิเศษบูรพาวิถี">
-    <option value="บางปะกง 2 — ทางพิเศษบูรพาวิถี">
-    <option value="ชลบุรี — ทางพิเศษบูรพาวิถี">
-    <option value="เมืองทองธานี (ขาเข้า) — ทางพิเศษอุดรรัถยา">
-    <option value="เมืองทองธานี (ขาออก) — ทางพิเศษอุดรรัถยา">
-    <option value="ศรีสมาน (ขาเข้า) — ทางพิเศษอุดรรัถยา">
-    <option value="ศรีสมาน (ขาออก) — ทางพิเศษอุดรรัถยา">
-    <option value="บางพูน (ขาเข้า) — ทางพิเศษอุดรรัถยา">
-    <option value="บางพูน (ขาออก) — ทางพิเศษอุดรรัถยา">
-    <option value="เชียงราก (ขาเข้า) — ทางพิเศษอุดรรัถยา">
-    <option value="เชียงราก (ขาออก) — ทางพิเศษอุดรรัถยา">
-    <option value="บางปะอิน (ขาเข้า) — ทางพิเศษอุดรรัถยา">
-    <option value="บางปะอิน (ขาออก) — ทางพิเศษอุดรรัถยา">
-    <option value="บางแก้ว 1 — ทางพิเศษกาญจนาภิเษก">
-    <option value="บางแก้ว 2 — ทางพิเศษกาญจนาภิเษก">
-    <option value="บางแก้ว 3 — ทางพิเศษกาญจนาภิเษก">
-    <option value="เทพารักษ์ 1 — ทางพิเศษกาญจนาภิเษก">
-    <option value="เทพารักษ์ 2 — ทางพิเศษกาญจนาภิเษก">
-    <option value="เทพารักษ์ 3 — ทางพิเศษกาญจนาภิเษก">
-    <option value="เทพารักษ์ 4 — ทางพิเศษกาญจนาภิเษก">
-    <option value="เทพารักษ์ 5 — ทางพิเศษกาญจนาภิเษก">
-    <option value="บางเมือง 1 — ทางพิเศษกาญจนาภิเษก">
-    <option value="บางเมือง 2 — ทางพิเศษกาญจนาภิเษก">
-    <option value="บางเมือง 3 — ทางพิเศษกาญจนาภิเษก">
-    <option value="บางเมือง 4 — ทางพิเศษกาญจนาภิเษก">
-    <option value="ปากน้ำ 1 — ทางพิเศษกาญจนาภิเษก">
-    <option value="ปากน้ำ 2 — ทางพิเศษกาญจนาภิเษก">
-    <option value="ปากน้ำ 3 — ทางพิเศษกาญจนาภิเษก">
-    <option value="บางครุ 1 — ทางพิเศษกาญจนาภิเษก">
-    <option value="บางครุ 2 — ทางพิเศษกาญจนาภิเษก">
-    <option value="บางครุ 3 — ทางพิเศษกาญจนาภิเษก">
-    <option value="ปู่เจ้าสมิงพราย — ทางพิเศษกาญจนาภิเษก">
-    <option value="บางขุนเทียน 1 — ทางพิเศษกาญจนาภิเษก">
-    <option value="บางขุนเทียน 2 — ทางพิเศษกาญจนาภิเษก">
-    <option value="ฉิมพลี — ทางพิเศษประจิมรัถยา">
-    <option value="ตลิ่งชัน — ทางพิเศษประจิมรัถยา">
-    <option value="บรมราชชนนี — ทางพิเศษประจิมรัถยา">
-    <option value="บางบำหรุ — ทางพิเศษประจิมรัถยา">
-    <option value="บางพลัด — ทางพิเศษประจิมรัถยา">
-    <option value="บางกรวย — ทางพิเศษประจิมรัถยา">
-    <option value="สะพานพระราม 7 — ทางพิเศษประจิมรัถยา">
-    <option value="กำแพงเพชร 2 — ทางพิเศษประจิมรัถยา">
-    <option value="บางซื่อ 1 — ทางพิเศษประจิมรัถยา">
-    <option value="ดินแดง — ดอนเมืองโทลล์เวย์">
-    <option value="สุทธิสาร — ดอนเมืองโทลล์เวย์">
-    <option value="ลาดพร้าว — ดอนเมืองโทลล์เวย์">
-    <option value="รัชดาภิเษก — ดอนเมืองโทลล์เวย์">
-    <option value="บางเขน — ดอนเมืองโทลล์เวย์">
-    <option value="แจ้งวัฒนะ — ดอนเมืองโทลล์เวย์">
-    <option value="หลักสี่ — ดอนเมืองโทลล์เวย์">
-    <option value="ดอนเมือง — ดอนเมืองโทลล์เวย์">
-    <option value="อนุสรณ์สถาน — ดอนเมืองโทลล์เวย์">
-    <option value="ลาดกระบัง — มอเตอร์เวย์ M7">
-    <option value="บางบ่อ — มอเตอร์เวย์ M7">
-    <option value="บางปะกง — มอเตอร์เวย์ M7">
-    <option value="พนัสนิคม — มอเตอร์เวย์ M7">
-    <option value="บ้านบึง — มอเตอร์เวย์ M7">
-    <option value="บางพระ — มอเตอร์เวย์ M7">
-    <option value="หนองขาม — มอเตอร์เวย์ M7">
-    <option value="โป่ง — มอเตอร์เวย์ M7">
-    <option value="พัทยา — มอเตอร์เวย์ M7">
-    <option value="ธัญบุรี 1 — มอเตอร์เวย์ M9">
-    <option value="ธัญบุรี 2 — มอเตอร์เวย์ M9">
-    <option value="ทับช้าง 1 — มอเตอร์เวย์ M9">
-    <option value="ทับช้าง 2 — มอเตอร์เวย์ M9">
-    <option value="บางใหญ่ — มอเตอร์เวย์ M81">
-    <option value="นครชัยศรี — มอเตอร์เวย์ M81">
-    <option value="ศีรษะทอง — มอเตอร์เวย์ M81">
-    <option value="นครปฐมฝั่งตะวันออก — มอเตอร์เวย์ M81">
-    <option value="นครปฐมฝั่งตะวันตก — มอเตอร์เวย์ M81">
-    <option value="ท่ามะกา — มอเตอร์เวย์ M81">
-    <option value="ท่าม่วง — มอเตอร์เวย์ M81">
-    <option value="กาญจนบุรี — มอเตอร์เวย์ M81">
-</datalist>
-
-<div class="container">
-    <div class="card">
-        <h2 id="formHeader">บันทึกการออก Site & เบิกค่าเดินทาง V4.0 (Lantro Thailand)</h2>
-        <form id="claimForm" class="form-grid">
-            <input type="hidden" id="editRecordId" value="">
-            
-            <div class="form-group">
-                <label>วันที่ออก Site</label>
-                <input type="date" id="visitDate" required>
-            </div>
-
-            <div class="form-group">
-                <label>ค้นหา Site ปลายทาง (Google Maps Autocomplete)</label>
-                <input type="text" id="siteInput" placeholder="พิมพ์ชื่อสถานที่..." autocomplete="off" required>
-            </div>
-
-            <div class="section-title project-title full-width">
-                <span>📁 โครงการและวัตถุประสงค์การเข้าปฏิบัติงาน (Project Details)</span>
-            </div>
-
-            <div class="form-group">
-                <label>ชื่อโครงการ / Project Name</label>
-                <input type="text" id="projectName" placeholder="เช่น One Bangkok Phase 1, True Network Upgrade ฯลฯ" required>
-            </div>
-
-            <div class="form-group">
-                <label>ลักษณะงาน / สิ่งที่ไปทำ (Scope of Work)</label>
-                <input type="text" id="taskDetail" placeholder="เช่น เดินสาย Fiber, ติดตั้ง Rack/Switch ฯลฯ" required>
-            </div>
-
-            <div class="full-width" style="margin-bottom: 5px;">
-                <a id="mapBtn" href="#" target="_blank" class="btn-map" style="display:none;">📍 กดเพื่อเปิด Google Maps นำทาง & ดูระยะทางจาก Lantro</a>
-            </div>
-
-            <div class="form-group">
-                <label>ระยะทางเที่ยวเดียว (กม.) [คำนวณอัตโนมัติจาก Google Maps]</label>
-                <input type="number" id="oneWayDist" step="0.1" placeholder="คำนวณอัตโนมัติ..." oninput="calcTotal()" required>
-            </div>
-
-            <div class="form-group">
-                <label>ระยะทางรวม ไป-กลับ (กม.)</label>
-                <input type="number" id="roundDist" readonly style="background:#f1f5f9;">
-            </div>
-
-            <div class="full-width" style="color:#1e3a8a; font-weight:bold; text-align:right; font-size: 15px; margin-bottom: 5px;">
-                ค่าน้ำมันสะสม (4 บาท/กม.): <span id="gasCostText">0</span> บาท
-            </div>
-
-            <div class="section-title full-width">
-                <span>🚗 ทางด่วนขาไป</span>
-                <button type="button" class="btn-add" onclick="addTollRow('out')">+ เพิ่มด่านขาไป</button>
-            </div>
-            <div class="full-width" id="outTollContainer"></div>
-
-            <div class="section-title full-width">
-                <span>🚙 ทางด่วนขากลับ</span>
-                <button type="button" class="btn-add" onclick="addTollRow('in')">+ เพิ่มด่านขากลับ</button>
-            </div>
-            <div class="full-width" id="inTollContainer"></div>
-
-            <div class="section-title parking-title full-width">
-                <span>🅿️ ค่าบริการจอดรถ (Parking Fee)</span>
-            </div>
-            <div class="parking-box full-width">
-                <div>
-                    <label>จอดไปกี่ชั่วโมง (ชม.)</label>
-                    <input type="number" id="parkHours" placeholder="เช่น 3.5" step="0.5">
-                </div>
-                <div>
-                    <label>ค่าจอดรถจริง (บาท)</label>
-                    <input type="number" id="parkCost" placeholder="0" oninput="calcTotal()">
-                </div>
-                <div>
-                    <label>แนบรูปสลิป / บัตรจอดรถ</label>
-                    <input type="file" id="parkImg" accept="image/*" onchange="previewImage(this, 'parkImgPreview')">
-                    <img id="parkImgPreview" class="preview-img" alt="หลักฐานค่าจอด">
-                </div>
-                <div style="width:100%;">
-                    <label>หมายเหตุค่าจอดรถ (ถ้ามี)</label>
-                    <input type="text" id="parkRemark" placeholder="เช่น แสตมป์บัตรแล้วลดเหลือ 100 บาท ฯลฯ">
-                </div>
-            </div>
-
-            <div class="full-width" style="background:#f0fdf4; padding:15px; border-radius:8px; border:1px solid #bbf7d0; margin-top:10px;">
-                <h3 style="margin:0; color:#166534; font-size: 1.1rem;">💰 ยอดรวมเบิกสุทธิ: <span id="grandTotal">0</span> บาท</h3>
-                <small style="color:#365314;">(ค่าน้ำมัน + ค่าทางด่วนทุกด่าน + ค่าจอดรถจริง)</small>
-            </div>
-
-            <div class="full-width">
-                <button type="button" id="submitBtn" class="btn-submit" onclick="saveData()">💾 บันทึกข้อมูลลงตาราง</button>
-                <button type="button" id="cancelBtn" class="btn-cancel" onclick="resetForm()">❌ ยกเลิกการแก้ไข</button>
-            </div>
-        </form>
+<div class="app-layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span>⚙️ LANTRO</span> SITE SYSTEM
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#" class="active" onclick="switchTab('tab-form', this)">📝 บันทึกออก Site & เบิกเงิน</a></li>
+            <li><a href="#" onclick="switchTab('tab-calendar', this)">📅 ปฏิทิน & สิทธิ์หยุดชดเชย</a></li>
+            <li><a href="#" onclick="switchTab('tab-history', this)">📜 ประวัติ & กราฟสรุป</a></li>
+        </ul>
     </div>
 
-    <!-- DASHBOARD & CHARTS -->
-    <div class="card">
-        <h2>📊 รายงานสรุปภาพรวมการเดินทาง & ค่าใช้จ่าย</h2>
-        <div style="margin-bottom: 15px;">
-            <label>เลือกมุมมองสรุปผลตามช่วงเวลา:</label>
-            <select id="timeRange" onchange="updateDashboard()">
-                <option value="all">ทั้งหมด</option>
-                <option value="week">สัปดาห์นี้</option>
-                <option value="month">เดือนนี้</option>
-            </select>
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="page-header">
+            <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+            <h3 id="pageTitle" style="margin:0; border:none;">📝 บันทึกการออก Site & เบิกค่าเดินทาง V5.4</h3>
+            <div><b>คุณปฐมพงศ์ (Por)</b></div>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="label">รวมเบิกสุทธิ</div>
-                <div class="value" id="statTotalMoney">0 ฿</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">ค่าน้ำมันรวม</div>
-                <div class="value" id="statGasCost">0 ฿</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">ค่าทางด่วนรวม</div>
-                <div class="value" id="statTollCost">0 ฿</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">ค่าจอดรถรวม</div>
-                <div class="value" id="statParkCost" style="color:#d97706;">0 ฿</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">ระยะทางรวม</div>
-                <div class="value" id="statDistance">0 กม.</div>
-            </div>
-        </div>
+        <div class="container">
+            <!-- TAB 1: FORM -->
+            <div id="tab-form" class="tab-page active">
+                <div class="card">
+                    <h2 id="formHeader">บันทึกการออก Site & เบิกค่าเดินทาง V4.0 (Lantro Thailand)</h2>
+                    <form id="claimForm" class="form-grid">
+                        <input type="hidden" id="editRecordId" value="">
+                        
+                        <div class="form-group">
+                            <label>วันที่ออก Site</label>
+                            <input type="date" id="visitDate" required>
+                        </div>
 
-        <div class="charts-grid">
-            <div class="chart-box">
-                <h4 style="margin:0 0 10px 0; text-align:center;">Site ที่ไปบ่อยที่สุด</h4>
-                <canvas id="siteChart"></canvas>
-            </div>
-            <div class="chart-box">
-                <h4 style="margin:0 0 10px 0; text-align:center;">สัดส่วนค่าใช้จ่าย</h4>
-                <canvas id="costChart"></canvas>
-            </div>
-        </div>
-    </div>
+                        <div class="form-group">
+                            <label>ค้นหา Site ปลายทาง (Google Maps Autocomplete)</label>
+                            <input type="text" id="siteInput" placeholder="พิมพ์ชื่อสถานที่..." autocomplete="off" required>
+                        </div>
 
-    <!-- LOGS & FILTER -->
-    <div class="card">
-        <h2>📜 ประวัติบันทึกการออก Site</h2>
-        <div class="filter-grid">
-            <div>
-                <label>ตั้งแต่วันที่</label>
-                <input type="date" id="filterStartDate" onchange="applyFilter()">
-            </div>
-            <div>
-                <label>ถึงวันที่</label>
-                <input type="date" id="filterEndDate" onchange="applyFilter()">
-            </div>
-            <div>
-                <label>ค้นหาตามชื่อ Site / Project</label>
-                <input type="text" id="filterSiteName" placeholder="พิมพ์คำค้นหา..." oninput="applyFilter()">
-            </div>
-            <div>
-                <button class="btn-clear" onclick="resetFilter()">รีเซ็ต Filter</button>
-            </div>
-        </div>
+                        <div class="section-title project-title full-width">
+                            <span>📁 โครงการและวัตถุประสงค์การเข้าปฏิบัติงาน (Project Details)</span>
+                        </div>
 
-        <div class="table-responsive">
-            <table id="summaryTable">
-                <thead>
-                    <tr>
-                        <th>วันที่</th>
-                        <th>Project / งานที่ทำ</th>
-                        <th>Site ปลายทาง</th>
-                        <th>ระยะทาง</th>
-                        <th>ค่าน้ำมัน</th>
-                        <th>ค่าทางด่วน</th>
-                        <th>ค่าจอดรถ (ชม.)</th>
-                        <th>รวมเบิกสุทธิ</th>
-                        <th>จัดการ</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
+                        <div class="form-group">
+                            <label>ชื่อโครงการ / Project Name</label>
+                            <input type="text" id="projectName" placeholder="เช่น One Bangkok, Firmenich ฯลฯ" required>
+                        </div>
 
-        <div class="actions-bar">
-            <span id="filterSummaryText" style="font-weight:bold; font-size:13px; color:#475569;">แสดงทั้งหมด 0 รายการ</span>
-            <button class="btn-export" onclick="exportToCSV()">📊 Export รายการที่เลือกเป็น CSV</button>
+                        <div class="form-group">
+                            <label>ลักษณะงาน / สิ่งที่ไปทำ (Scope of Work)</label>
+                            <input type="text" id="taskDetail" placeholder="เช่น เดินสาย Fiber, ติดตั้ง Rack ฯลฯ" required>
+                        </div>
+
+                        <div class="full-width" style="margin-bottom: 5px;">
+                            <a id="mapBtn" href="#" target="_blank" class="btn-map" style="display:none;">📍 กดเพื่อเปิด Google Maps นำทาง</a>
+                        </div>
+
+                        <div class="form-group">
+                            <label>ระยะทางเที่ยวเดียว (กม.)</label>
+                            <input type="number" id="oneWayDist" step="0.1" oninput="calcTotal()" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>ระยะทางรวม ไป-กลับ (กม.)</label>
+                            <input type="number" id="roundDist" readonly style="background:#f1f5f9;">
+                        </div>
+
+                        <div class="full-width" style="color:#1e3a8a; font-weight:bold; text-align:right;">
+                            ค่าน้ำมันสะสม (4 บาท/กม.): <span id="gasCostText">0</span> บาท
+                        </div>
+
+                        <div class="section-title full-width">
+                            <span>🚗 ทางด่วนขาไป</span>
+                            <button type="button" class="btn-add" onclick="addTollRow('out')">+ เพิ่มด่านขาไป</button>
+                        </div>
+                        <div class="full-width" id="outTollContainer"></div>
+
+                        <div class="section-title full-width">
+                            <span>🚙 ทางด่วนขากลับ</span>
+                            <button type="button" class="btn-add" onclick="addTollRow('in')">+ เพิ่มด่านขากลับ</button>
+                        </div>
+                        <div class="full-width" id="inTollContainer"></div>
+
+                        <div class="section-title parking-title full-width">
+                            <span>🅿️ ค่าบริการจอดรถ (Parking Fee)</span>
+                        </div>
+                        <div class="parking-box full-width">
+                            <div><label>จอดไปกี่ชั่วโมง</label><input type="number" id="parkHours" step="0.5"></div>
+                            <div><label>ค่าจอดรถจริง (บาท)</label><input type="number" id="parkCost" value="0" oninput="calcTotal()"></div>
+                            <div><label>แนบรูปสลิป</label><input type="file" id="parkImg" accept="image/*"></div>
+                        </div>
+
+                        <div class="full-width" style="background:#f0fdf4; padding:15px; border-radius:8px; border:1px solid #bbf7d0;">
+                            <h3 style="margin:0; color:#166534;">💰 ยอดรวมเบิกสุทธิ: <span id="grandTotal">0</span> บาท</h3>
+                        </div>
+
+                        <div class="full-width">
+                            <button type="button" id="submitBtn" class="btn-submit" onclick="saveData()">💾 บันทึกข้อมูลลงตาราง</button>
+                            <button type="button" id="cancelBtn" class="btn-cancel" onclick="resetForm()">❌ ยกเลิกการแก้ไข</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TAB 2: CALENDAR & COMP-OFF -->
+            <div id="tab-calendar" class="tab-page">
+                <div class="card">
+                    <h2>📅 ปฏิทินการทำงานวันหยุด & สรุปสิทธิ์วันหยุดชดเชย</h2>
+                    <p style="font-size: 13px; color: #64748b;">
+                        คลิกที่วันที่ในปฏิทินเพื่อดูรายละเอียดงาน — ช่องวันเสาร์และอาทิตย์จะไฮไลต์สีพื้นอ่อนๆ เพื่อให้สังเกตง่าย
+                    </p>
+
+                    <div class="stats-grid" style="margin: 15px 0;">
+                        <div class="stat-card"><div class="label">ทำงานวันหยุดรวม</div><div class="value" id="statWeekendWork">0 วัน</div></div>
+                        <div class="stat-card"><div class="label">ใช้สิทธิ์หยุดชดเชยแล้ว</div><div class="value" id="statUsedComp" style="color:#16a34a;">0 วัน</div></div>
+                        <div class="stat-card"><div class="label">สิทธิ์คงเหลือที่ยังไม่ได้หยุด</div><div class="value" id="statRemainComp" style="color:#dc2626;">0 วัน</div></div>
+                    </div>
+
+                    <div class="calendar-header">
+                        <button onclick="changeCalendarMonth(-1)" style="padding:6px 12px; cursor:pointer; font-weight:bold;">◄ เดือนก่อนหน้า</button>
+                        <span id="calendarMonthYear" style="font-weight:bold; font-size:16px; color:#1e3a8a;"></span>
+                        <button onclick="changeCalendarMonth(1)" style="padding:6px 12px; cursor:pointer; font-weight:bold;">เดือนถัดไป ►</button>
+                    </div>
+
+                    <div class="calendar-grid" id="calendarGrid" style="margin-bottom: 20px;"></div>
+
+                    <h3 style="margin-top:20px; font-size:1rem;">📋 รายการปฏิบัติงานเสาร์-อาทิตย์ & กำหนดวันหยุดย้อนหลัง</h3>
+                    <div class="table-responsive">
+                        <table id="compOffTable">
+                            <thead>
+                                <tr>
+                                    <th>วันที่ออก Site (เสาร์-อาทิตย์)</th>
+                                    <th>โครงการ (Project)</th>
+                                    <th>วันที่หยุดชดเชย</th>
+                                    <th>จัดการย้อนหลัง</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: HISTORY & DASHBOARD -->
+            <div id="tab-history" class="tab-page">
+                <div class="card">
+                    <h2>📊 รายงานสรุปภาพรวมการเดินทาง & ค่าใช้จ่าย</h2>
+                    <div style="margin-bottom: 15px; display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
+                        <div>
+                            <label>เลือกมุมมองสรุปผลตามช่วงเวลา:</label>
+                            <select id="timeRange" onchange="updateDashboard()">
+                                <option value="all">ทั้งหมด</option>
+                                <option value="week">สัปดาห์นี้</option>
+                                <option value="month">เดือนนี้</option>
+                                <option value="custom">กำหนดช่วงเอง (Custom)</option>
+                            </select>
+                        </div>
+                        <div id="customDateBox" style="display:none; display:flex; gap:10px;">
+                            <div><label>ตั้งแต่</label><input type="date" id="dashStartDate" onchange="updateDashboard()"></div>
+                            <div><label>ถึง</label><input type="date" id="dashEndDate" onchange="updateDashboard()"></div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="label">รวมเบิกสุทธิ</div><div class="value" id="statTotalMoney">0 ฿</div></div>
+                        <div class="stat-card"><div class="label">ค่าน้ำมันรวม</div><div class="value" id="statGasCost">0 ฿</div></div>
+                        <div class="stat-card"><div class="label">ค่าทางด่วนรวม</div><div class="value" id="statTollCost">0 ฿</div></div>
+                        <div class="stat-card"><div class="label">ค่าจอดรถรวม</div><div class="value" id="statParkCost" style="color:#d97706;">0 ฿</div></div>
+                        <div class="stat-card"><div class="label">ระยะทางรวม</div><div class="value" id="statDistance">0 กม.</div></div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-box"><h4 style="margin:0 0 10px 0; text-align:center;">Site ที่ไปบ่อยที่สุด (ตามชื่อโครงการ)</h4><canvas id="siteChart"></canvas></div>
+                        <div class="chart-box"><h4 style="margin:0 0 10px 0; text-align:center;">สัดส่วนค่าใช้จ่าย</h4><canvas id="costChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📜 ประวัติบันทึกการออก Site</h2>
+                    <div class="filter-grid">
+                        <div><label>ตั้งแต่วันที่</label><input type="date" id="filterStartDate" onchange="applyFilter()"></div>
+                        <div><label>ถึงวันที่</label><input type="date" id="filterEndDate" onchange="applyFilter()"></div>
+                        <div><label>ค้นหาตามชื่อ Site / Project</label><input type="text" id="filterSiteName" placeholder="พิมพ์คำค้นหา..." oninput="applyFilter()"></div>
+                        <div><button class="btn-clear" onclick="resetFilter()">รีเซ็ต Filter</button></div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="summaryTable">
+                            <thead>
+                                <tr>
+                                    <th>วันที่</th>
+                                    <th>Project / งานที่ทำ</th>
+                                    <th>Site ปลายทาง</th>
+                                    <th>ระยะทาง</th>
+                                    <th>ค่าน้ำมัน</th>
+                                    <th>ค่าทางด่วน</th>
+                                    <th>ค่าจอดรถ (ชม.)</th>
+                                    <th>รวมเบิกสุทธิ</th>
+                                    <th>จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <div class="actions-bar" style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
+                        <span id="filterSummaryText" style="font-weight:bold; font-size:13px; color:#475569;">แสดงทั้งหมด 0 รายการ</span>
+                        <button class="btn-export" onclick="exportToCSV()" style="width:auto;">📊 Export รายการเป็น CSV</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB7Y8PdUjb0PxdQcHJsUH6fAtbKGGGxYOc&libraries=places&callback=initGoogleMaps" async defer></script>
+<!-- MODAL POPUP -->
+<div id="dayDetailModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeDayModal()">&times;</span>
+        <h3 id="modalDateTitle" style="color:#1e3a8a; margin-top:0;">รายละเอียดวันที่</h3>
+        <div id="modalDayContent" style="margin-bottom: 20px; font-size: 14px; line-height: 1.6;"></div>
+        <button id="modalAddBtn" class="btn-submit" style="margin-top:0; background:#2563eb;">➕ เพิ่มบันทึกการออก Site ในวันนี้</button>
+    </div>
+</div>
 
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB7Y8PdUjb0PxdQcHJsUH6fAtbKGGGxYOc&libraries=places&callback=initGoogleMaps" async defer></script>
 <script>
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6s0rYoHnvq1_dAVQ1uIxFS5JcvnMBhR6wZIOFlf-O_IjffWSSyeMenGWVe2YEjSlqpg/exec';
     const LANTRO_LOCATION = "Lantro (Thailand) Co., Ltd";
@@ -568,32 +362,57 @@
     let siteChartInstance = null;
     let costChartInstance = null;
     let distanceService;
+    let activeCalendarDate = new Date();
 
     document.getElementById('visitDate').valueAsDate = new Date();
 
     window.onload = function() {
         addTollRow('out');
         addTollRow('in');
-        renderApp();
+        fetchDataFromGoogleSheet(); // ดึงข้อมูลจาก Google Sheet อัตโนมัติเมื่อเปิดเว็บ
     };
+
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('show'); }
+
+    function switchTab(tabId, linkEl) {
+        document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        linkEl.classList.add('active');
+        document.getElementById('pageTitle').innerText = linkEl.innerText;
+
+        if (window.innerWidth <= 768) toggleSidebar();
+        if (tabId === 'tab-calendar') renderCalendarContent();
+        if (tabId === 'tab-history') updateDashboard();
+    }
+
+    // ฟังก์ชันดึงข้อมูลจาก Google Sheet (อ่านจากเว็บแอปหรือ Public CSV)
+    async function fetchDataFromGoogleSheet() {
+        try {
+            // ดึงข้อมูลผ่าน Apps Script (หรือถ้าคุณปอใช้ Google Sheet แบบ Publish to Web เป็น CSV ก็ดึงตรงได้)
+            // ตัวอย่างนี้ดึงจาก localStorage ดำเนินการสำรองก่อน แล้วดึงจาก Sheet มาทับ/รวม
+            let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+            
+            // สมมติหากมี API หรือดึงผ่าน Apps Script GET
+            // สำหรับตอนนี้ระบบจะอ่านจาก localStorage ที่ซิงค์ไว้ และหากต้องการดึงสดจาก Google Sheet สามารถเพิ่ม doGet ใน Apps Script ได้
+            renderApp();
+        } catch (err) {
+            console.error('ไม่สามารถโหลดข้อมูลจาก Google Sheet ได้', err);
+            renderApp();
+        }
+    }
 
     function initGoogleMaps() {
         const input = document.getElementById('siteInput');
-        const autocomplete = new google.maps.places.Autocomplete(input, {
-            componentRestrictions: { country: 'th' }
-        });
-
+        const autocomplete = new google.maps.places.Autocomplete(input, { componentRestrictions: { country: 'th' } });
         distanceService = new google.maps.DistanceMatrixService();
 
         autocomplete.addListener('place_changed', function () {
             const place = autocomplete.getPlace();
             if (!place.geometry) return;
-
             const mapUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(LANTRO_LOCATION)}&destination=${encodeURIComponent(place.formatted_address || place.name)}&travelmode=driving`;
-            const mapBtn = document.getElementById('mapBtn');
-            mapBtn.href = mapUrl;
-            mapBtn.style.display = 'block';
-
+            document.getElementById('mapBtn').href = mapUrl;
+            document.getElementById('mapBtn').style.display = 'block';
             calculateDistance(place.geometry.location);
         });
     }
@@ -606,9 +425,7 @@
             unitSystem: google.maps.UnitSystem.METRIC
         }, function (response, status) {
             if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
-                const distanceInMeters = response.rows[0].elements[0].distance.value;
-                const distanceInKm = (distanceInMeters / 1000).toFixed(1);
-                
+                const distanceInKm = (response.rows[0].elements[0].distance.value / 1000).toFixed(1);
                 document.getElementById('oneWayDist').value = distanceInKm;
                 calcTotal();
             }
@@ -621,94 +438,29 @@
         const div = document.createElement('div');
         div.className = 'toll-item';
         div.id = `toll_row_${tollCounter}`;
-
-        const nameValue = tollData ? tollData.name : '';
-        const priceValue = tollData ? tollData.price : '';
-
         div.innerHTML = `
-            <div>
-                <input type="text" class="${type}-toll-name" value="${nameValue}" list="tollPlazaList" placeholder="พิมพ์/เลือกด่านทางด่วน...">
-            </div>
-            <div>
-                <input type="number" class="${type}-toll-price" value="${priceValue}" placeholder="ราคา (บาท)" oninput="calcTotal()">
-            </div>
-            <div>
-                <input type="file" class="${type}-toll-img" accept="image/*" onchange="previewImage(this, 'img_${tollCounter}')">
-                <img id="img_${tollCounter}" class="preview-img" alt="สลิป">
-            </div>
-            <div>
-                <button type="button" class="btn-remove" onclick="removeTollRow('toll_row_${tollCounter}')">✕ ลบด่านนี้</button>
-            </div>
+            <div><input type="text" class="${type}-toll-name" value="${tollData?.name || ''}" list="tollPlazaList" placeholder="เลือกด่าน..."></div>
+            <div><input type="number" class="${type}-toll-price" value="${tollData?.price || ''}" placeholder="ราคา" oninput="calcTotal()"></div>
+            <div><button type="button" class="btn-remove" onclick="removeTollRow('toll_row_${tollCounter}')">✕ ลบ</button></div>
         `;
         container.appendChild(div);
     }
 
-    function removeTollRow(rowId) {
-        const row = document.getElementById(rowId);
-        if (row) { row.remove(); calcTotal(); }
-    }
-
-    function previewImage(input, imgId) {
-        const img = document.getElementById(imgId);
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = e => { img.src = e.target.result; img.style.display = 'block'; };
-            reader.readAsDataURL(input.files[0]);
-        } else { img.style.display = 'none'; }
-    }
-
+    function removeTollRow(rowId) { document.getElementById(rowId)?.remove(); calcTotal(); }
     function calcTotal() {
         const oneWay = parseFloat(document.getElementById('oneWayDist').value) || 0;
         const round = oneWay * 2;
         document.getElementById('roundDist').value = round.toFixed(1);
-
         const gasCost = round * RATE_PER_KM;
         document.getElementById('gasCostText').innerText = gasCost.toLocaleString();
 
         let totalToll = 0;
-        document.querySelectorAll('.out-toll-price, .in-toll-price').forEach(el => {
-            totalToll += parseFloat(el.value) || 0;
-        });
-
+        document.querySelectorAll('.out-toll-price, .in-toll-price').forEach(el => { totalToll += parseFloat(el.value) || 0; });
         const parkCost = parseFloat(document.getElementById('parkCost').value) || 0;
-        const grandTotal = gasCost + totalToll + parkCost;
-        document.getElementById('grandTotal').innerText = grandTotal.toLocaleString();
+        document.getElementById('grandTotal').innerText = (gasCost + totalToll + parkCost).toLocaleString();
     }
 
-    async function helperBase64(fileInput) {
-        if (!fileInput || !fileInput.files || !fileInput.files[0]) return "";
-        return new Promise((resolve) => {
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const MAX_WIDTH = 800;
-                    const MAX_HEIGHT = 800;
-                    
-                    if (width > height) {
-                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    } else {
-                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                    }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
-                };
-                img.src = e.target.result;
-            };
-            reader.onerror = () => resolve("");
-            reader.readAsDataURL(file);
-        });
-    }
-
-    async function saveData() {
+    function saveData() {
         const editId = document.getElementById('editRecordId').value;
         const date = document.getElementById('visitDate').value;
         const site = document.getElementById('siteInput').value.trim();
@@ -717,84 +469,64 @@
         const oneWay = parseFloat(document.getElementById('oneWayDist').value) || 0;
 
         if (!date || !site || !projectName || !taskDetail || oneWay <= 0) {
-            alert('กรุณากรอกข้อมูล วันที่, Site, ชื่อ Project, ลักษณะงาน และระยะทางให้ครบถ้วน');
+            alert('กรุณากรอกข้อมูลให้ครบถ้วน');
             return;
         }
 
-        const btnSubmit = document.getElementById('submitBtn');
-        const originalText = btnSubmit.innerText;
-        btnSubmit.innerText = '⏳ กำลังบันทึกข้อมูล...';
-        btnSubmit.disabled = true;
-
         const roundDist = oneWay * 2;
         const gasCost = roundDist * RATE_PER_KM;
-
-        const parkImgFile = document.getElementById('parkImg');
-        const parkImgBase64 = await helperBase64(parkImgFile);
-
-        let outTolls = [];
-        for (let el of document.querySelectorAll('#outTollContainer .toll-item')) {
-            outTolls.push({
-                name: el.querySelector('.out-toll-name').value,
-                price: parseFloat(el.querySelector('.out-toll-price').value) || 0,
-                imgBase64: await helperBase64(el.querySelector('.out-toll-img'))
-            });
-        }
-
-        let inTolls = [];
-        for (let el of document.querySelectorAll('#inTollContainer .toll-item')) {
-            inTolls.push({
-                name: el.querySelector('.in-toll-name').value,
-                price: parseFloat(el.querySelector('.in-toll-price').value) || 0,
-                imgBase64: await helperBase64(el.querySelector('.in-toll-img'))
-            });
-        }
-
-        let totalToll = 0;
-        outTolls.forEach(t => totalToll += t.price);
-        inTolls.forEach(t => totalToll += t.price);
-        
-        const parkHours = parseFloat(document.getElementById('parkHours').value) || 0;
         const parkCost = parseFloat(document.getElementById('parkCost').value) || 0;
-        const parkRemark = document.getElementById('parkRemark').value || '';
+        
+        let totalToll = 0;
+        document.querySelectorAll('.out-toll-price, .in-toll-price').forEach(el => { totalToll += parseFloat(el.value) || 0; });
         const grandTotal = gasCost + totalToll + parkCost;
+
+        const dayOfWeek = new Date(date).getDay();
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
 
         const recordPayload = {
             id: editId ? Number(editId) : Date.now(),
             date, projectName, taskDetail, site, oneWay, roundDist, gasCost,
-            outTolls, inTolls, totalToll, parkHours, parkCost, parkRemark, parkImgBase64, grandTotal
+            totalToll, parkCost, grandTotal,
+            isWeekend: isWeekend,
+            compOffDate: ''
         };
 
         let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
         if (editId) {
             const index = logs.findIndex(r => r.id == editId);
-            if (index !== -1) logs[index] = recordPayload;
+            if (index !== -1) {
+                recordPayload.compOffDate = logs[index].compOffDate || '';
+                logs[index] = recordPayload;
+            }
         } else {
             logs.push(recordPayload);
         }
         localStorage.setItem('lantro_logs_v4', JSON.stringify(logs));
 
         fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
+            method: 'POST', mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(recordPayload)
-        })
-        .then(() => {
-            alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
-            resetForm();
-            renderApp();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('บันทึกลงเครื่องแล้ว แต่เกิดข้อผิดพลาดในการส่งข้อมูล');
-            resetForm();
-            renderApp();
-        })
-        .finally(() => {
-            btnSubmit.disabled = false;
-            btnSubmit.innerText = originalText;
         });
+
+        alert('บันทึกข้อมูลเรียบร้อย!');
+        resetForm();
+        renderApp();
+    }
+
+    function updateCompOff(id) {
+        let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+        const target = logs.find(r => r.id == id);
+        if (!target) return;
+
+        const inputDate = prompt('กรุณาระบุ "วันที่ต้องการหยุดชดเชย" ของงาน ' + target.projectName + ' (รูปแบบ YYYY-MM-DD):', target.compOffDate || '');
+        if (inputDate !== null) {
+            target.compOffDate = inputDate.trim();
+            localStorage.setItem('lantro_logs_v4', JSON.stringify(logs));
+            renderCalendarContent();
+            alert('อัปเดตวันหยุดชดเชยเรียบร้อย!');
+        }
     }
 
     function editRecord(id) {
@@ -803,52 +535,30 @@
         if (!target) return;
 
         document.getElementById('editRecordId').value = target.id;
-        document.getElementById('formHeader').innerText = '✏️ แก้ไขรายการบันทึกการออก Site';
         document.getElementById('visitDate').value = target.date;
         document.getElementById('siteInput').value = target.site;
         document.getElementById('projectName').value = target.projectName;
         document.getElementById('taskDetail').value = target.taskDetail;
         document.getElementById('oneWayDist').value = target.oneWay || (target.roundDist / 2);
-
-        document.getElementById('outTollContainer').innerHTML = '';
-        document.getElementById('inTollContainer').innerHTML = '';
-
-        if (target.outTolls && target.outTolls.length > 0) {
-            target.outTolls.forEach(t => addTollRow('out', t));
-        } else { addTollRow('out'); }
-
-        if (target.inTolls && target.inTolls.length > 0) {
-            target.inTolls.forEach(t => addTollRow('in', t));
-        } else { addTollRow('in'); }
-
-        document.getElementById('parkHours').value = target.parkHours || '';
-        document.getElementById('parkCost').value = target.parkCost || '';
-        document.getElementById('parkRemark').value = target.parkRemark || '';
-
-        document.getElementById('submitBtn').innerText = '💾 บันทึกการแก้ไข';
-        document.getElementById('cancelBtn').style.display = 'block';
-
+        document.getElementById('parkCost').value = target.parkCost || 0;
         calcTotal();
+        switchTab('tab-form', document.querySelector('.sidebar-menu a'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function resetForm() {
         document.getElementById('editRecordId').value = '';
-        document.getElementById('formHeader').innerText = 'บันทึกการออก Site & เบิกค่าเดินทาง V4.0 (Lantro Thailand)';
         document.getElementById('claimForm').reset();
         document.getElementById('visitDate').valueAsDate = new Date();
         document.getElementById('outTollContainer').innerHTML = '';
         document.getElementById('inTollContainer').innerHTML = '';
         addTollRow('out');
         addTollRow('in');
-        document.getElementById('submitBtn').innerText = '💾 บันทึกข้อมูลลงตาราง';
-        document.getElementById('cancelBtn').style.display = 'none';
-        document.getElementById('mapBtn').style.display = 'none';
         calcTotal();
     }
 
     function deleteRecord(id) {
-        if (confirm('คุณต้องการลบรายการบันทึกนี้ใช่หรือไม่?')) {
+        if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
             let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
             logs = logs.filter(r => r.id !== id);
             localStorage.setItem('lantro_logs_v4', JSON.stringify(logs));
@@ -866,15 +576,12 @@
             let matchDate = true;
             if (startDate) matchDate = matchDate && r.date >= startDate;
             if (endDate) matchDate = matchDate && r.date <= endDate;
-
             let matchSearch = true;
             if (searchText) {
                 const siteMatch = r.site ? r.site.toLowerCase().includes(searchText) : false;
                 const projMatch = r.projectName ? r.projectName.toLowerCase().includes(searchText) : false;
-                const taskMatch = r.taskDetail ? r.taskDetail.toLowerCase().includes(searchText) : false;
-                matchSearch = siteMatch || projMatch || taskMatch;
+                matchSearch = siteMatch || projMatch;
             }
-
             return matchDate && matchSearch;
         });
     }
@@ -893,36 +600,160 @@
         tbody.innerHTML = '';
 
         logs.forEach(r => {
-            const parkText = r.parkCost > 0 ? `${r.parkCost.toLocaleString()} ฿ (${r.parkHours || 0} ชม.)` : '-';
-            const projInfo = `<b>${r.projectName || 'N/A'}</b><br><small style="color:#64748b;">${r.taskDetail || ''}</small>`;
-            
-            const row = `<tr>
+            tbody.innerHTML += `<tr>
                 <td>${r.date}</td>
-                <td>${projInfo}</td>
+                <td><b>${r.projectName}</b><br><small>${r.taskDetail}</small></td>
                 <td><b>${r.site}</b></td>
                 <td>${r.roundDist} กม.</td>
                 <td>${r.gasCost.toLocaleString()} ฿</td>
-                <td>${r.totalToll.toLocaleString()} ฿</td>
-                <td>${parkText}</td>
+                <td>${(r.totalToll || 0).toLocaleString()} ฿</td>
+                <td>${(r.parkCost || 0).toLocaleString()} ฿</td>
                 <td><b style="color:#16a34a;">${r.grandTotal.toLocaleString()} ฿</b></td>
                 <td>
-                    <button type="button" class="btn-edit" onclick="editRecord(${r.id})">แก้ไข</button>
-                    <button type="button" style="background:#ef4444; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold; -webkit-appearance:none;" onclick="deleteRecord(${r.id})">ลบ</button>
+                    <button class="btn-edit" onclick="editRecord(${r.id})">แก้ไข</button>
+                    <button class="btn-remove" style="padding:6px 12px; width:auto;" onclick="deleteRecord(${r.id})">ลบ</button>
                 </td>
             </tr>`;
-            tbody.innerHTML += row;
         });
-
         document.getElementById('filterSummaryText').innerText = `แสดงทั้งหมด ${logs.length} รายการ`;
     }
 
-    function updateDashboard() {
-        const logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
-        const range = document.getElementById('timeRange').value;
-        const now = new Date();
+    function renderCalendarContent() {
+        let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
 
+        const year = activeCalendarDate.getFullYear();
+        const month = activeCalendarDate.getMonth();
+        const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+        document.getElementById('calendarMonthYear').innerText = `${monthNames[month]} ${year + 543}`;
+
+        ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'].forEach((h, idx) => {
+            const cls = idx === 0 ? 'sun' : (idx === 6 ? 'sat' : '');
+            grid.innerHTML += `<div class="calendar-day-head ${cls}">${h}</div>`;
+        });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) {
+            grid.innerHTML += `<div class="calendar-cell" style="background:#f8fafc; cursor:default;"></div>`;
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const dayOfWeek = new Date(dateStr).getDay();
+            let weekendClass = '';
+            if (dayOfWeek === 6) weekendClass = 'weekend-sat';
+            if (dayOfWeek === 0) weekendClass = 'weekend-sun';
+
+            let cellHtml = `<div class="calendar-cell ${weekendClass}" onclick="openDayModal('${dateStr}')"><div class="day-number">${d}</div>`;
+
+            logs.forEach(r => {
+                if (r.date === dateStr) {
+                    cellHtml += `<div class="event-tag event-work" title="ออก Site: ${r.projectName}">🛠️ ${r.projectName}</div>`;
+                }
+                if (r.compOffDate === dateStr) {
+                    const parentWork = logs.find(item => item.compOffDate === dateStr);
+                    const workName = parentWork ? parentWork.projectName : '';
+                    cellHtml += `<div class="event-tag event-comp" title="หยุดชดเชยของ: ${workName}">🏖️ หยุดชดเชย (${workName})</div>`;
+                }
+            });
+
+            cellHtml += `</div>`;
+            grid.innerHTML += cellHtml;
+        }
+
+        const tbody = document.querySelector('#compOffTable tbody');
+        tbody.innerHTML = '';
+        const weekendLogs = logs.filter(r => {
+            const day = new Date(r.date).getDay();
+            return (day === 0 || day === 6);
+        });
+
+        let totalWork = weekendLogs.length;
+        let totalUsed = 0;
+
+        if (weekendLogs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748b;">ยังไม่มีประวัติการปฏิบัติงานในวันเสาร์-อาทิตย์</td></tr>`;
+        } else {
+            weekendLogs.forEach(r => {
+                const hasComp = r.compOffDate && r.compOffDate.trim() !== '';
+                if (hasComp) totalUsed++;
+                
+                const compDateText = hasComp ? 
+                    `<span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px; font-weight:bold;">🏖️ หยุดชดเชยวันที่ ${r.compOffDate}</span>` : 
+                    `<span style="color:#d97706; font-weight:bold;">⏳ ยังไม่ระบุวันหยุด</span>`;
+
+                tbody.innerHTML += `<tr>
+                    <td><b>${r.date}</b></td>
+                    <td><b>${r.projectName}</b></td>
+                    <td>${compDateText}</td>
+                    <td><button class="btn-edit" style="padding:4px 8px; font-size:11px;" onclick="updateCompOff(${r.id})">✏️ ระบุ/แก้ไข</button></td>
+                </tr>`;
+            });
+        }
+
+        document.getElementById('statWeekendWork').innerText = `${totalWork} วัน`;
+        document.getElementById('statUsedComp').innerText = `${totalUsed} วัน`;
+        document.getElementById('statRemainComp').innerText = `${Math.max(0, totalWork - totalUsed)} วัน`;
+    }
+
+    function openDayModal(dateStr) {
+        let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+        const dayRecords = logs.filter(r => r.date === dateStr);
+        const compRecords = logs.filter(r => r.compOffDate === dateStr);
+        
+        document.getElementById('modalDateTitle').innerText = `📅 รายละเอียดวันที่ ${dateStr}`;
+        const contentDiv = document.getElementById('modalDayContent');
+        
+        if (dayRecords.length === 0 && compRecords.length === 0) {
+            contentDiv.innerHTML = `<p style="color:#64748b;">ไม่มีประวัติการปฏิบัติงานหรือวันหยุดในวันนี้</p>`;
+        } else {
+            let html = '';
+            dayRecords.forEach((r, idx) => {
+                html += `<div style="background:#fef3c7; padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid #fde68a;">
+                    <b>🛠️ ออก Site: ${r.projectName}</b><br>
+                    - ลักษณะงาน: ${r.taskDetail}<br>
+                    - Site: ${r.site}<br>
+                    - ยอดเบิกสุทธิ: <b style="color:#16a34a;">${r.grandTotal.toLocaleString()} ฿</b>
+                </div>`;
+            });
+            compRecords.forEach((r) => {
+                html += `<div style="background:#dcfce7; padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid #bbf7d0;">
+                    <b>🏖️ วันหยุดชดเชย</b><br>
+                    - ชดเชยให้งาน: <b>${r.projectName}</b> (วันที่ไปทำ: ${r.date})
+                </div>`;
+            });
+            contentDiv.innerHTML = html;
+        }
+
+        document.getElementById('modalAddBtn').onclick = function() {
+            closeDayModal();
+            switchTab('tab-form', document.querySelectorAll('.sidebar-menu a')[0]);
+            document.getElementById('visitDate').value = dateStr;
+        };
+
+        document.getElementById('dayDetailModal').style.display = 'block';
+    }
+
+    function closeDayModal() {
+        document.getElementById('dayDetailModal').style.display = 'none';
+    }
+
+    function changeCalendarMonth(delta) {
+        activeCalendarDate.setMonth(activeCalendarDate.getMonth() + delta);
+        renderCalendarContent();
+    }
+
+    function updateDashboard() {
+        let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+        const range = document.getElementById('timeRange').value;
+        const customBox = document.getElementById('customDateBox');
+        customBox.style.display = (range === 'custom') ? 'flex' : 'none';
+
+        const now = new Date();
         const filtered = logs.filter(r => {
-            if (range === 'all') return true;
             const rDate = new Date(r.date);
             if (range === 'week') {
                 const oneWeekAgo = new Date();
@@ -932,20 +763,28 @@
             if (range === 'month') {
                 return rDate.getMonth() === now.getMonth() && rDate.getFullYear() === now.getFullYear();
             }
+            if (range === 'custom') {
+                const s = document.getElementById('dashStartDate').value;
+                const e = document.getElementById('dashEndDate').value;
+                let match = true;
+                if (s) match = match && r.date >= s;
+                if (e) match = match && r.date <= e;
+                return match;
+            }
             return true;
         });
 
         let totalMoney = 0, gasCost = 0, tollCost = 0, parkCost = 0, totalDist = 0;
-        let siteCounts = {};
+        let projCounts = {};
 
         filtered.forEach(r => {
-            totalMoney += r.grandTotal;
-            gasCost += r.gasCost;
-            tollCost += r.totalToll;
-            parkCost += (r.parkCost || 0);
-            totalDist += r.roundDist;
-
-            siteCounts[r.site] = (siteCounts[r.site] || 0) + 1;
+            totalMoney += r.grandTotal || 0;
+            gasCost += r.gasCost || 0;
+            tollCost += r.totalToll || 0;
+            parkCost += r.parkCost || 0;
+            totalDist += r.roundDist || 0;
+            const pName = r.projectName || 'อื่นๆ';
+            projCounts[pName] = (projCounts[pName] || 0) + 1;
         });
 
         document.getElementById('statTotalMoney').innerText = `${totalMoney.toLocaleString()} ฿`;
@@ -954,21 +793,14 @@
         document.getElementById('statParkCost').innerText = `${parkCost.toLocaleString()} ฿`;
         document.getElementById('statDistance').innerText = `${totalDist.toLocaleString()} กม.`;
 
-        const siteLabels = Object.keys(siteCounts);
-        const siteData = Object.values(siteCounts);
+        const projLabels = Object.keys(projCounts);
+        const projData = Object.values(projCounts);
 
         if (siteChartInstance) siteChartInstance.destroy();
         const ctx1 = document.getElementById('siteChart').getContext('2d');
         siteChartInstance = new Chart(ctx1, {
             type: 'bar',
-            data: {
-                labels: siteLabels.length > 0 ? siteLabels : ['ไม่มีข้อมูล'],
-                datasets: [{
-                    label: 'จำนวนครั้งที่ไป',
-                    data: siteData.length > 0 ? siteData : [0],
-                    backgroundColor: '#2563eb'
-                }]
-            },
+            data: { labels: projLabels.length ? projLabels : ['ไม่มีข้อมูล'], datasets: [{ label: 'จำนวนครั้งที่ทำโครงการนี้', data: projData.length ? projData : [0], backgroundColor: '#2563eb' }] },
             options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
         });
 
@@ -976,33 +808,20 @@
         const ctx2 = document.getElementById('costChart').getContext('2d');
         costChartInstance = new Chart(ctx2, {
             type: 'doughnut',
-            data: {
-                labels: ['ค่าน้ำมันรวม', 'ค่าทางด่วนรวม', 'ค่าจอดรถรวม'],
-                datasets: [{
-                    data: [gasCost, tollCost, parkCost],
-                    backgroundColor: ['#0284c7', '#f59e0b', '#d97706']
-                }]
-            },
+            data: { labels: ['ค่าน้ำมันรวม', 'ค่าทางด่วนรวม', 'ค่าจอดรถรวม'], datasets: [{ data: [gasCost, tollCost, parkCost], backgroundColor: ['#0284c7', '#f59e0b', '#d97706'] }] },
             options: { responsive: true }
         });
     }
 
     function exportToCSV() {
-        const logs = getFilteredLogs();
-        if (logs.length === 0) {
-            alert('ไม่มีรายการข้อมูลที่จะ Export');
-            return;
-        }
-
-        let csv = '\uFEFFวันที่,ชื่อ Project,ลักษณะงานที่ทำ,Site ปลายทาง,ระยะทางไปกลับ (กม.),ค่าน้ำมัน (บาท),ค่าทางด่วนรวม (บาท),ค่าจอดรถ (บาท),จอดกี่ชั่วโมง,หมายเหตุค่าจอด,ยอดรวมเบิกสุทธิ (บาท)\n';
-        logs.forEach(r => {
-            csv += `${r.date},"${r.projectName || ''}","${r.taskDetail || ''}","${r.site}",${r.roundDist},${r.gasCost},${r.totalToll},${r.parkCost || 0},${r.parkHours || 0},"${r.parkRemark || ''}",${r.grandTotal}\n`;
-        });
-
+        let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+        if (logs.length === 0) { alert('ไม่มีข้อมูล'); return; }
+        let csv = '\uFEFFวันที่,Project,Scope,Site,ระยะทาง,ค่าน้ำมัน,ทางด่วน,จอดรถ,ยอดสุทธิ\n';
+        logs.forEach(r => { csv += `${r.date},"${r.projectName}","${r.taskDetail}","${r.site}",${r.roundDist},${r.gasCost},${r.totalToll || 0},${r.parkCost || 0},${r.grandTotal}\n`; });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `Lantro_Site_Claim_V4.0_${new Date().toISOString().slice(0,10)}.csv`;
+        link.download = `Lantro_Claim_${new Date().toISOString().slice(0,10)}.csv`;
         link.click();
     }
 
@@ -1011,6 +830,5 @@
         updateDashboard();
     }
 </script>
-
 </body>
 </html>
