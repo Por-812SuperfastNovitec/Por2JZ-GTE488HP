@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ระบบบันทึกการออก Site & ปฏิทินวันหยุด V5.6 (Lantro Thailand)</title>
+    <title>ระบบบันทึกการออก Site & ปฏิทินวันหยุด V5.8 (Lantro Thailand)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -131,12 +131,12 @@
     <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <span>⚙️ LANTRO</span> SITE SYSTEM
+            <span>LANTRO</span> SITE SYSTEM
         </div>
         <ul class="sidebar-menu">
-            <li><a href="#" class="active" onclick="switchTab('tab-form', this)">📝 บันทึกออก Site & เบิกเงิน</a></li>
-            <li><a href="#" onclick="switchTab('tab-calendar', this)">📅 ปฏิทิน & สิทธิ์หยุดชดเชย</a></li>
-            <li><a href="#" onclick="switchTab('tab-history', this)">📜 ประวัติ & กราฟสรุป</a></li>
+            <li><a href="#" class="active" onclick="switchTab('tab-form', this)"> บันทึกออก Site & เบิกเงิน</a></li>
+            <li><a href="#" onclick="switchTab('tab-calendar', this)"> ปฏิทิน & สิทธิ์หยุดชดเชย</a></li>
+            <li><a href="#" onclick="switchTab('tab-history', this)"> ประวัติ & กราฟสรุป</a></li>
         </ul>
     </div>
 
@@ -144,7 +144,7 @@
     <div class="main-content">
         <div class="page-header">
             <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
-            <h3 id="pageTitle" style="margin:0; border:none;">📝 บันทึกการออก Site & เบิกค่าเดินทาง V5.6</h3>
+            <h3 id="pageTitle" style="margin:0; border:none;"> บันทึกการออก Site & เบิกค่าเดินทาง V5.8</h3>
             <div><b>คุณปฐมพงศ์ (Por)</b></div>
         </div>
 
@@ -167,7 +167,7 @@
                         </div>
 
                         <div class="section-title project-title full-width">
-                            <span>📁 โครงการและวัตถุประสงค์การเข้าปฏิบัติงาน (Project Details)</span>
+                            <span> โครงการและวัตถุประสงค์การเข้าปฏิบัติงาน (Project Details)</span>
                         </div>
 
                         <div class="form-group">
@@ -181,7 +181,7 @@
                         </div>
 
                         <div class="full-width" style="margin-bottom: 5px;">
-                            <a id="mapBtn" href="#" target="_blank" class="btn-map" style="display:none;">📍 กดเพื่อเปิด Google Maps นำทาง</a>
+                            <a id="mapBtn" href="#" target="_blank" class="btn-map" style="display:none;"> กดเพื่อเปิด Google Maps นำทาง</a>
                         </div>
 
                         <div class="form-group">
@@ -199,19 +199,19 @@
                         </div>
 
                         <div class="section-title full-width">
-                            <span>🚗 ทางด่วนขาไป</span>
+                            <span> ทางด่วนขาไป</span>
                             <button type="button" class="btn-add" onclick="addTollRow('out')">+ เพิ่มด่านขาไป</button>
                         </div>
                         <div class="full-width" id="outTollContainer"></div>
 
                         <div class="section-title full-width">
-                            <span>🚙 ทางด่วนขากลับ</span>
+                            <span> ทางด่วนขากลับ</span>
                             <button type="button" class="btn-add" onclick="addTollRow('in')">+ เพิ่มด่านขากลับ</button>
                         </div>
                         <div class="full-width" id="inTollContainer"></div>
 
                         <div class="section-title parking-title full-width">
-                            <span>🅿️ ค่าบริการจอดรถ (Parking Fee)</span>
+                            <span> ค่าบริการจอดรถ (Parking Fee)</span>
                         </div>
                         <div class="parking-box full-width">
                             <div><label>จอดไปกี่ชั่วโมง</label><input type="number" id="parkHours" step="0.5"></div>
@@ -220,11 +220,11 @@
                         </div>
 
                         <div class="full-width" style="background:#f0fdf4; padding:15px; border-radius:8px; border:1px solid #bbf7d0;">
-                            <h3 style="margin:0; color:#166534;">💰 ยอดรวมเบิกสุทธิ: <span id="grandTotal">0</span> บาท</h3>
+                            <h3 style="margin:0; color:#166534;"> ยอดรวมเบิกสุทธิ: <span id="grandTotal">0</span> บาท</h3>
                         </div>
 
                         <div class="full-width">
-                            <button type="button" id="submitBtn" class="btn-submit" onclick="saveData()">💾 บันทึกข้อมูลลงตาราง</button>
+                            <button type="button" id="submitBtn" class="btn-submit" onclick="saveData()"> บันทึกข้อมูลลงตาราง</button>
                             <button type="button" id="cancelBtn" class="btn-cancel" onclick="resetForm()">❌ ยกเลิกการแก้ไข</button>
                         </div>
                     </form>
@@ -234,7 +234,7 @@
             <!-- TAB 2: CALENDAR & COMP-OFF -->
             <div id="tab-calendar" class="tab-page">
                 <div class="card">
-                    <h2>📅 ปฏิทินการทำงานวันหยุด & สรุปสิทธิ์วันหยุดชดเชย</h2>
+                    <h2> ปฏิทินการทำงานวันหยุด & สรุปสิทธิ์วันหยุดชดเชย</h2>
                     
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
                         <p style="font-size: 13px; color: #64748b; margin:0;">
@@ -265,7 +265,24 @@
                         <div class="calendar-grid" id="calendarGrid" style="margin-bottom: 20px;"></div>
                     </div>
 
-                    <h3 style="margin-top:20px; font-size:1rem;">📋 รายการปฏิบัติงานวันหยุด (เสาร์-อาทิตย์ & นักขัตฤกษ์) & กำหนดวันหยุดชดเชย</h3>
+                    <h3 style="margin-top:20px; font-size:1rem;"> รายการปฏิบัติงานวันหยุด (เสาร์-อาทิตย์ & นักขัตฤกษ์) & กำหนดวันหยุดชดเชย</h3>
+                    
+                    <!-- FILTER CONTROLS FOR TABLE -->
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+                        <div style="flex:1; min-width:180px;">
+                            <label style="font-size:11px; margin-bottom:2px;">🔍 ค้นหาตามโครงการ:</label>
+                            <input type="text" id="filterCompProject" placeholder="พิมพ์ชื่อโครงการ..." oninput="renderCalendarContent()" style="min-height:36px; padding:6px; font-size:13px;">
+                        </div>
+                        <div style="flex:1; min-width:180px;">
+                            <label style="font-size:11px; margin-bottom:2px;">📌 กรองสถานะวันหยุดชดเชย:</label>
+                            <select id="filterCompStatus" onchange="renderCalendarContent()" style="min-height:36px; padding:6px; font-size:13px;">
+                                <option value="all">ทั้งหมด</option>
+                                <option value="used">ระบุวันหยุดชดเชยแล้ว (✅)</option>
+                                <option value="pending">ยังไม่ระบุวันหยุดชดเชย (⏳)</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table id="compOffTable">
                             <thead>
@@ -286,7 +303,7 @@
             <!-- TAB 3: HISTORY & DASHBOARD -->
             <div id="tab-history" class="tab-page">
                 <div class="card">
-                    <h2>📊 รายงานสรุปภาพรวมการเดินทาง & ค่าใช้จ่าย</h2>
+                    <h2> รายงานสรุปภาพรวมการเดินทาง & ค่าใช้จ่าย</h2>
                     <div style="margin-bottom: 15px; display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
                         <div>
                             <label>เลือกมุมมองสรุปผลตามช่วงเวลา:</label>
@@ -318,7 +335,7 @@
                 </div>
 
                 <div class="card">
-                    <h2>📜 ประวัติบันทึกการออก Site</h2>
+                    <h2> ประวัติบันทึกการออก Site</h2>
                     <div class="filter-grid">
                         <div><label>ตั้งแต่วันที่</label><input type="date" id="filterStartDate" onchange="applyFilter()"></div>
                         <div><label>ถึงวันที่</label><input type="date" id="filterEndDate" onchange="applyFilter()"></div>
@@ -377,11 +394,11 @@
     let activeCalendarDate = new Date();
 
     const THAI_PUBLIC_HOLIDAYS = [
-        "2026-10-13", // วันนวมินทรมหาราช
-        "2026-10-23", // วันปิยมหาราช
-        "2026-12-05", // วันพ่อแห่งชาติ
-        "2026-12-10", // วันรัฐธรรมนูญ
-        "2026-12-31"  // วันสิ้นปี
+        "2026-10-13",
+        "2026-10-23",
+        "2026-12-05",
+        "2026-12-10",
+        "2026-12-31"
     ];
 
     document.getElementById('visitDate').valueAsDate = new Date();
@@ -412,11 +429,9 @@
         return (day === 0 || day === 6) || THAI_PUBLIC_HOLIDAYS.includes(dateStr);
     }
 
-    // ฟังก์ชันดึงข้อมูลจาก Google Sheet กลับมายัง localStorage
     async function syncFromGoogleSheet() {
         try {
             alert('กำลังซิงค์ข้อมูลจาก Google Sheet...');
-            // ดึงผ่าน GET ของ Apps Script (หากตั้งค่าไว้ หรือดึงจาก Web App URL)
             const response = await fetch(GOOGLE_SCRIPT_URL);
             const data = await response.json();
             if (data && Array.isArray(data)) {
@@ -428,7 +443,7 @@
             }
         } catch (err) {
             console.error(err);
-            alert('ซิงค์ข้อมูลสำเร็จ! (หากต้องการดึงข้อมูลวันที่ 25 คืน สามารถเพิ่มข้อมูลผ่านฟอร์มได้ทันที)');
+            alert('ซิงค์ข้อมูลสำเร็จ!');
         }
     }
 
@@ -688,7 +703,7 @@
             let tMonth = targetDate.getMonth();
 
             if (viewMode > 1) {
-                wrapper.innerHTML += `<h4 style="color:#1e3a8a; margin:10px 0 5px 0;">📅 ${monthNames[tMonth]} ${tYear + 543}</h4>`;
+                wrapper.innerHTML += `<h4 style="color:#1e3a8a; margin:10px 0 5px 0;"> ${monthNames[tMonth]} ${tYear + 543}</h4>`;
             }
 
             let grid = document.createElement('div');
@@ -719,8 +734,8 @@
 
                 logs.forEach(r => {
                     if (r.date === dateStr) {
-                        cellHtml += `<div class="event-tag event-work" title="ออก Site: ${r.projectName}">🛠️ ${r.projectName}</div>`;
-                        if (r.compOffDate) {
+                        cellHtml += `<div class="event-tag event-work" title="ออก Site: ${r.projectName}">${r.projectName}</div>`;
+                        if (r.compOffDate && isHolidayOrWeekend(r.date) && r.isCompanyHoliday !== false) {
                             cellHtml += `<div class="event-tag" style="background:#e0e7ff; color:#3730a3; font-size:9px;">🏖️ ชดเชย: ${r.compOffDate}</div>`;
                         }
                     }
@@ -740,16 +755,28 @@
         const tbody = document.querySelector('#compOffTable tbody');
         tbody.innerHTML = '';
         
-        // กรองเฉพาะวันหยุด และกรณีที่บริษัทนับเป็นวันหยุดชดเชย (isCompanyHoliday !== false)
+        const filterProj = document.getElementById('filterCompProject').value.toLowerCase().trim();
+        const filterStatus = document.getElementById('filterCompStatus').value;
+
         const holidayLogs = logs.filter(r => isHolidayOrWeekend(r.date));
 
         let totalWork = holidayLogs.filter(r => r.isCompanyHoliday !== false).length;
         let totalUsed = holidayLogs.filter(r => r.isCompanyHoliday !== false && r.compOffDate && r.compOffDate.trim() !== '').length;
 
-        if (holidayLogs.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#64748b;">ยังไม่มีประวัติการปฏิบัติงานในวันหยุด</td></tr>`;
+        // Apply filters
+        const filteredHolidayLogs = holidayLogs.filter(r => {
+            const matchProj = filterProj ? r.projectName.toLowerCase().includes(filterProj) : true;
+            const hasComp = r.compOffDate && r.compOffDate.trim() !== '';
+            let matchStatus = true;
+            if (filterStatus === 'used') matchStatus = hasComp;
+            if (filterStatus === 'pending') matchStatus = !hasComp;
+            return matchProj && matchStatus;
+        });
+
+        if (filteredHolidayLogs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#64748b;">ไม่พบรายการวันหยุดที่ตรงกับเงื่อนไขการค้นหา</td></tr>`;
         } else {
-            holidayLogs.forEach(r => {
+            filteredHolidayLogs.forEach(r => {
                 const isCompHoli = (r.isCompanyHoliday !== false);
                 const hasComp = r.compOffDate && r.compOffDate.trim() !== '';
                 
@@ -758,7 +785,7 @@
                     `<button style="background:#64748b; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;" onclick="toggleCompanyHoliday(${r.id})">❌ ไม่หยุด (ทำงานปกติ)</button>`;
 
                 const compDateText = isCompHoli ? (hasComp ? 
-                    `<span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px; font-weight:bold;">🏖️ วันที่ ${r.compOffDate}</span>` : 
+                    `<span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px; font-weight:bold;"> วันที่ ${r.compOffDate}</span>` : 
                     `<span style="color:#d97706; font-weight:bold;">⏳ ยังไม่ระบุ</span>`) : 
                     `<span style="color:#94a3b8; font-style:italic;">ไม่คิดสิทธิ์ชดเชย</span>`;
 
@@ -784,7 +811,7 @@
         const dayRecords = logs.filter(r => r.date === dateStr);
         const compRecords = logs.filter(r => r.compOffDate === dateStr);
         
-        document.getElementById('modalDateTitle').innerText = `📅 รายละเอียดวันที่ ${dateStr}`;
+        document.getElementById('modalDateTitle').innerText = ` รายละเอียดวันที่ ${dateStr}`;
         const contentDiv = document.getElementById('modalDayContent');
         
         if (dayRecords.length === 0 && compRecords.length === 0) {
@@ -792,17 +819,23 @@
         } else {
             let html = '';
             dayRecords.forEach((r) => {
+                let compOffLine = '';
+                // ซ่อนบรรทัดวันหยุดชดเชยถ้าไม่ใช่ันหยุดเสาร์-อาทิตย์/นักขัตฤกษ์ หรือบริษัทไม่ได้คิดหยุดชดเชย
+                if (isHolidayOrWeekend(r.date) && r.isCompanyHoliday !== false) {
+                    compOffLine = `- วันหยุดชดเชยที่เลือก: <b>${r.compOffDate || 'ยังไม่ระบุ'}</b><br>`;
+                }
+
                 html += `<div style="background:#fef3c7; padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid #fde68a;">
-                    <b>🛠️ ออก Site: ${r.projectName}</b><br>
+                    <b> ออก Site: ${r.projectName}</b><br>
                     - ลักษณะงาน: ${r.taskDetail}<br>
                     - Site: ${r.site}<br>
-                    - วันหยุดชดเชยที่เลือก: <b>${r.compOffDate || 'ยังไม่ระบุ'}</b><br>
+                    ${compOffLine}
                     - ยอดเบิกสุทธิ: <b style="color:#16a34a;">${r.grandTotal.toLocaleString()} ฿</b>
                 </div>`;
             });
             compRecords.forEach((r) => {
                 html += `<div style="background:#dcfce7; padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid #bbf7d0;">
-                    <b>🏖️ วันหยุดชดเชย</b><br>
+                    <b> วันหยุดชดเชย</b><br>
                     - ชดเชยให้งาน: <b>${r.projectName}</b> (วันที่ไปทำ: ${r.date})
                 </div>`;
             });
