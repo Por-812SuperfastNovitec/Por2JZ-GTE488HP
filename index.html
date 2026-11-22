@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ระบบบันทึกการออก Site & ปฏิทินวันหยุด V5.9 (Lantro Thailand)</title>
+    <title>ระบบบันทึกการออก Site & ปฏิทินวันหยุด V6.0 (Lantro Thailand)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -99,9 +99,14 @@
         
         .calendar-cell .day-number { font-weight: bold; font-size: 12px; margin-bottom: 4px; }
         .event-tag { width: 100%; padding: 4px 6px; border-radius: 4px; font-size: 10px; margin-bottom: 3px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+        .event-weekday { background: #dbeafe; color: #1e40af; border-left: 3px solid #2563eb; }
         .event-work { background: #fef3c7; color: #92400e; border-left: 3px solid #d97706; }
         .event-comp { background: #dcfce7; color: #166534; border-left: 3px solid #16a34a; }
         
+        .legend-bar { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; margin-bottom: 12px; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; overflow-y: auto; padding: 15px; }
         .modal-content { background: white; max-width: 500px; margin: 50px auto; padding: 20px; border-radius: 12px; position: relative; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
         .close-modal { position: absolute; right: 15px; top: 15px; font-size: 24px; cursor: pointer; font-weight: bold; color: #64748b; }
@@ -144,7 +149,7 @@
     <div class="main-content">
         <div class="page-header">
             <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
-            <h3 id="pageTitle" style="margin:0; border:none;"> บันทึกการออก Site & เบิกค่าเดินทาง V5.9</h3>
+            <h3 id="pageTitle" style="margin:0; border:none;"> บันทึกการออก Site & เบิกค่าเดินทาง V6.0</h3>
             <div><b>คุณปฐมพงศ์ (Por)</b></div>
         </div>
 
@@ -234,11 +239,11 @@
             <!-- TAB 2: CALENDAR & COMP-OFF -->
             <div id="tab-calendar" class="tab-page">
                 <div class="card">
-                    <h2> ปฏิทินการทำงานวันหยุด & สรุปสิทธิ์วันหยุดชดเชย</h2>
+                    <h2> ปฏิทินการออก Site ทุกวัน & สรุปสิทธิ์วันหยุดชดเชย</h2>
                     
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
                         <p style="font-size: 13px; color: #64748b; margin:0;">
-                            เลือกวันหยุดนักขัตฤกษ์ที่ <b>"บริษัทหยุดจริง"</b> เพื่อคำนวณสิทธิ์ชดเชย
+                            แสดงรายการออก Site <b>ทุกวัน</b> (วันธรรมดาสีฟ้า / วันหยุดสีเหลืองทอง) และคำนวณสิทธิ์วันหยุดชดเชย
                         </p>
                         <div style="display:flex; gap:10px; align-items:center;">
                             <button onclick="syncFromGoogleSheet()" style="background:#0284c7; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:bold;">🔄 ซิงค์ข้อมูลสด</button>
@@ -247,6 +252,12 @@
                                 <option value="2">2 เดือนติดกัน</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div class="legend-bar">
+                        <div class="legend-item"><span class="legend-dot" style="background:#2563eb;"></span> ออก Site วันธรรมดา</div>
+                        <div class="legend-item"><span class="legend-dot" style="background:#d97706;"></span> ออก Site วันหยุด (ได้สิทธิ์ชดเชย)</div>
+                        <div class="legend-item"><span class="legend-dot" style="background:#16a34a;"></span> วันหยุดชดเชย</div>
                     </div>
 
                     <div class="stats-grid" style="margin: 15px 0;">
@@ -402,12 +413,27 @@
 
     document.getElementById('visitDate').valueAsDate = new Date();
 
-    // ดึงข้อมูลสดจาก Google Sheet ทันทีที่เปิดเว็บ (ทั้งคอมพิวเตอร์และมือถือ)
     window.onload = function() {
         addTollRow('out');
         addTollRow('in');
-        syncFromGoogleSheet(); 
+        renderApp(); // แสดงข้อมูลเดิมในเครื่องก่อนทันที
+        syncFromGoogleSheet(); // แล้วดึงข้อมูลล่าสุดจาก Google Sheet มาทับ
     };
+
+    // ฟังก์ชันแปลงวันที่ให้เป็น YYYY-MM-DD เสมอ ป้องกันรูปแบบวันที่ไม่ตรงกัน
+    function normalizeDate(val) {
+        if (!val || val === '-') return '';
+        const str = String(val).trim();
+        if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+            return str.slice(0, 10);
+        }
+        const d = new Date(str);
+        if (isNaN(d.getTime())) return str;
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('show'); }
 
@@ -424,23 +450,30 @@
     }
 
     function isHolidayOrWeekend(dateStr) {
-        const d = new Date(dateStr);
+        const norm = normalizeDate(dateStr);
+        if (!norm) return false;
+        const parts = norm.split('-');
+        const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
         const day = d.getDay();
-        return (day === 0 || day === 6) || THAI_PUBLIC_HOLIDAYS.includes(dateStr);
+        return (day === 0 || day === 6) || THAI_PUBLIC_HOLIDAYS.includes(norm);
     }
 
-    // ฟังก์ชันซิงค์และดึงข้อมูลสดจาก Google Sheet (Real-time Sync)
     async function syncFromGoogleSheet() {
         try {
             const response = await fetch(GOOGLE_SCRIPT_URL);
             const data = await response.json();
             if (data && Array.isArray(data)) {
-                localStorage.setItem('lantro_logs_v4', JSON.stringify(data));
+                const normalizedData = data.map(item => ({
+                    ...item,
+                    date: normalizeDate(item.date),
+                    compOffDate: normalizeDate(item.compOffDate) || '-'
+                }));
+                localStorage.setItem('lantro_logs_v4', JSON.stringify(normalizedData));
                 renderApp();
             }
         } catch (err) {
             console.error("ไม่สามารถเชื่อมต่อ Google Sheet ได้:", err);
-            renderApp(); // Fallback ใช้ข้อมูลเดิมในเครื่องถ้าเน็ตหลุด
+            renderApp();
         }
     }
 
@@ -504,7 +537,7 @@
 
     async function saveData() {
         const editId = document.getElementById('editRecordId').value;
-        const date = document.getElementById('visitDate').value;
+        const date = normalizeDate(document.getElementById('visitDate').value);
         const site = document.getElementById('siteInput').value.trim();
         const projectName = document.getElementById('projectName').value.trim();
         const taskDetail = document.getElementById('taskDetail').value.trim();
@@ -529,22 +562,33 @@
             totalToll, parkCost, grandTotal,
             weekendStatus: isHolidayOrWeekend(date) ? 'วันหยุด' : 'วันธรรมดา',
             compOffDate: '-',
-            compRemark: '-'
+            compRemark: '-',
+            isCompanyHoliday: true
         };
 
-        // ส่งข้อมูลไปยัง Google Sheet ทันที
+        // บันทึกลง localStorage ทันทีเพื่อให้หน้าปฏิทินและตารางแสดงผลทันทีโดยไม่ต้องรอเน็ต
+        let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
+        if (editId) {
+            const idx = logs.findIndex(r => r.id == editId);
+            if (idx > -1) logs[idx] = recordPayload;
+            else logs.push(recordPayload);
+        } else {
+            logs.push(recordPayload);
+        }
+        localStorage.setItem('lantro_logs_v4', JSON.stringify(logs));
+        renderApp();
+
         try {
-            alert('กำลังบันทึกข้อมูลไปยัง Google Sheet...');
             await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 body: JSON.stringify(recordPayload)
             });
-            alert('บันทึกข้อมูลสำเร็จ!');
+            alert('บันทึกข้อมูลสำเร็จและซิงค์ลง Google Sheet แล้ว!');
             resetForm();
-            syncFromGoogleSheet(); // ดึงข้อมูลล่าสุดกลับมาแสดงผลทันที
+            syncFromGoogleSheet();
         } catch (err) {
             console.error(err);
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            alert('บันทึกในเครื่องแล้ว แต่ไม่สามารถส่งไป Google Sheet ได้ในขณะนี้');
         }
     }
 
@@ -553,9 +597,9 @@
         const target = logs.find(r => r.id == id);
         if (!target) return;
 
-        const inputDate = prompt('กรุณาระบุ "วันที่ต้องการหยุดชดเชย" ของงาน ' + target.projectName + ' (รูปแบบ YYYY-MM-DD):', target.compOffDate || '');
+        const inputDate = prompt('กรุณาระบุ "วันที่ต้องการหยุดชดเชย" ของงาน ' + target.projectName + ' (รูปแบบ YYYY-MM-DD):', target.compOffDate !== '-' ? target.compOffDate : '');
         if (inputDate !== null) {
-            target.compOffDate = inputDate.trim();
+            target.compOffDate = normalizeDate(inputDate) || '-';
             localStorage.setItem('lantro_logs_v4', JSON.stringify(logs));
             renderCalendarContent();
             alert('อัปเดตวันหยุดชดเชยเรียบร้อย!');
@@ -578,7 +622,7 @@
         if (!target) return;
 
         document.getElementById('editRecordId').value = target.id;
-        document.getElementById('visitDate').value = target.date;
+        document.getElementById('visitDate').value = normalizeDate(target.date);
         document.getElementById('siteInput').value = target.site;
         document.getElementById('projectName').value = target.projectName;
         document.getElementById('taskDetail').value = target.taskDetail;
@@ -616,9 +660,10 @@
         const searchText = document.getElementById('filterSiteName').value.toLowerCase().trim();
 
         return logs.filter(r => {
+            const rDate = normalizeDate(r.date);
             let matchDate = true;
-            if (startDate) matchDate = matchDate && r.date >= startDate;
-            if (endDate) matchDate = matchDate && r.date <= endDate;
+            if (startDate) matchDate = matchDate && rDate >= startDate;
+            if (endDate) matchDate = matchDate && rDate <= endDate;
             let matchSearch = true;
             if (searchText) {
                 const siteMatch = r.site ? r.site.toLowerCase().includes(searchText) : false;
@@ -643,8 +688,9 @@
         tbody.innerHTML = '';
 
         logs.forEach(r => {
+            const rDate = normalizeDate(r.date);
             tbody.innerHTML += `<tr>
-                <td>${r.date}</td>
+                <td>${rDate}</td>
                 <td><b>${r.projectName}</b><br><small>${r.taskDetail}</small></td>
                 <td><b>${r.site}</b></td>
                 <td>${r.roundDist} กม.</td>
@@ -706,7 +752,7 @@
 
             for (let d = 1; d <= daysInMonth; d++) {
                 const dateStr = `${tYear}-${String(tMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const dayOfWeek = new Date(dateStr).getDay();
+                const dayOfWeek = new Date(tYear, tMonth, d).getDay();
                 let cellClass = '';
                 if (dayOfWeek === 6) cellClass = 'weekend-sat';
                 if (dayOfWeek === 0) cellClass = 'weekend-sun';
@@ -715,16 +761,23 @@
                 let cellHtml = `<div class="calendar-cell ${cellClass}" onclick="openDayModal('${dateStr}')"><div class="day-number">${d}</div>`;
 
                 logs.forEach(r => {
-                    if (r.date === dateStr) {
-                        cellHtml += `<div class="event-tag event-work" title="ออก Site: ${r.projectName}">${r.projectName}</div>`;
-                        if (r.compOffDate && isHolidayOrWeekend(r.date) && r.isCompanyHoliday !== false) {
-                            cellHtml += `<div class="event-tag" style="background:#e0e7ff; color:#3730a3; font-size:9px;">🏖️ ชดเชย: ${r.compOffDate}</div>`;
+                    const logDate = normalizeDate(r.date);
+                    const compDate = normalizeDate(r.compOffDate);
+
+                    // แสดงรายการออก Site ทุกวัน (แยกสีระหว่างวันธรรมดา กับ วันหยุด)
+                    if (logDate === dateStr) {
+                        const isHoli = isHolidayOrWeekend(dateStr);
+                        const tagClass = isHoli ? 'event-work' : 'event-weekday';
+                        cellHtml += `<div class="event-tag ${tagClass}" title="ออก Site: ${r.projectName} (${r.site})">${r.projectName}</div>`;
+                        
+                        if (compDate && isHoli && r.isCompanyHoliday !== false) {
+                            cellHtml += `<div class="event-tag" style="background:#e0e7ff; color:#3730a3; font-size:9px;">🏖️ ชดเชย: ${compDate}</div>`;
                         }
                     }
-                    if (r.compOffDate === dateStr) {
-                        const parentWork = logs.find(item => item.compOffDate === dateStr);
-                        const workName = parentWork ? parentWork.projectName : '';
-                        cellHtml += `<div class="event-tag event-comp" title="หยุดชดเชยของ: ${workName}">🏖️ หยุดชดเชย (${workName})</div>`;
+
+                    // แสดงแท็กวันที่หยุดชดเชย
+                    if (compDate === dateStr) {
+                        cellHtml += `<div class="event-tag event-comp" title="หยุดชดเชยของ: ${r.projectName}">🏖️ หยุดชดเชย (${r.projectName})</div>`;
                     }
                 });
 
@@ -734,6 +787,7 @@
             wrapper.appendChild(grid);
         }
 
+        // ตารางด้านล่างยังคงสรุปเฉพาะรายการที่ไปทำในวันหยุดเพื่อจัดการวันหยุดชดเชย
         const tbody = document.querySelector('#compOffTable tbody');
         tbody.innerHTML = '';
         
@@ -743,11 +797,14 @@
         const holidayLogs = logs.filter(r => isHolidayOrWeekend(r.date));
 
         let totalWork = holidayLogs.filter(r => r.isCompanyHoliday !== false).length;
-        let totalUsed = holidayLogs.filter(r => r.isCompanyHoliday !== false && r.compOffDate && r.compOffDate.trim() !== '' && r.compOffDate !== '-').length;
+        let totalUsed = holidayLogs.filter(r => {
+            const c = normalizeDate(r.compOffDate);
+            return r.isCompanyHoliday !== false && c !== '';
+        }).length;
 
         const filteredHolidayLogs = holidayLogs.filter(r => {
-            const matchProj = filterProj ? r.projectName.toLowerCase().includes(filterProj) : true;
-            const hasComp = r.compOffDate && r.compOffDate.trim() !== '' && r.compOffDate !== '-';
+            const matchProj = filterProj ? (r.projectName || '').toLowerCase().includes(filterProj) : true;
+            const hasComp = normalizeDate(r.compOffDate) !== '';
             let matchStatus = true;
             if (filterStatus === 'used') matchStatus = hasComp;
             if (filterStatus === 'pending') matchStatus = !hasComp;
@@ -758,20 +815,22 @@
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#64748b;">ไม่พบรายการวันหยุดที่ตรงกับเงื่อนไขการค้นหา</td></tr>`;
         } else {
             filteredHolidayLogs.forEach(r => {
+                const rDate = normalizeDate(r.date);
+                const cDate = normalizeDate(r.compOffDate);
                 const isCompHoli = (r.isCompanyHoliday !== false);
-                const hasComp = r.compOffDate && r.compOffDate.trim() !== '' && r.compOffDate !== '-';
+                const hasComp = cDate !== '';
                 
                 const toggleBtn = isCompHoli ? 
                     `<button style="background:#16a34a; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;" onclick="toggleCompanyHoliday(${r.id})">✅ บริษัทหยุด</button>` : 
                     `<button style="background:#64748b; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;" onclick="toggleCompanyHoliday(${r.id})">❌ ไม่หยุด</button>`;
 
                 const compDateText = isCompHoli ? (hasComp ? 
-                    `<span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px; font-weight:bold;"> วันที่ ${r.compOffDate}</span>` : 
+                    `<span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:4px; font-weight:bold;"> วันที่ ${cDate}</span>` : 
                     `<span style="color:#d97706; font-weight:bold;">⏳ ยังไม่ระบุ</span>`) : 
                     `<span style="color:#94a3b8; font-style:italic;">ไม่คิดสิทธิ์ชดเชย</span>`;
 
                 tbody.innerHTML += `<tr>
-                    <td><b>${r.date}</b> ${THAI_PUBLIC_HOLIDAYS.includes(r.date) ? '<span style="color:#dc2626; font-size:11px;">(นักขัตฯ)</span>' : ''}</td>
+                    <td><b>${rDate}</b> ${THAI_PUBLIC_HOLIDAYS.includes(rDate) ? '<span style="color:#dc2626; font-size:11px;">(นักขัตฯ)</span>' : ''}</td>
                     <td><b>${r.projectName}</b></td>
                     <td>${toggleBtn}</td>
                     <td>${compDateText}</td>
@@ -789,8 +848,8 @@
 
     function openDayModal(dateStr) {
         let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
-        const dayRecords = logs.filter(r => r.date === dateStr);
-        const compRecords = logs.filter(r => r.compOffDate === dateStr);
+        const dayRecords = logs.filter(r => normalizeDate(r.date) === dateStr);
+        const compRecords = logs.filter(r => normalizeDate(r.compOffDate) === dateStr);
         
         document.getElementById('modalDateTitle').innerText = ` รายละเอียดวันที่ ${dateStr}`;
         const contentDiv = document.getElementById('modalDayContent');
@@ -800,13 +859,18 @@
         } else {
             let html = '';
             dayRecords.forEach((r) => {
+                const isHoli = isHolidayOrWeekend(r.date);
+                const cDate = normalizeDate(r.compOffDate);
                 let compOffLine = '';
-                if (isHolidayOrWeekend(r.date) && r.isCompanyHoliday !== false) {
-                    compOffLine = `- วันหยุดชดเชยที่เลือก: <b>${r.compOffDate && r.compOffDate !== '-' ? r.compOffDate : 'ยังไม่ระบุ'}</b><br>`;
+                if (isHoli && r.isCompanyHoliday !== false) {
+                    compOffLine = `- วันหยุดชดเชยที่เลือก: <b>${cDate || 'ยังไม่ระบุ'}</b><br>`;
                 }
 
-                html += `<div style="background:#fef3c7; padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid #fde68a;">
-                    <b> ออก Site: ${r.projectName}</b><br>
+                const boxBg = isHoli ? '#fef3c7' : '#eff6ff';
+                const boxBorder = isHoli ? '#fde68a' : '#bfdbfe';
+
+                html += `<div style="background:${boxBg}; padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid ${boxBorder};">
+                    <b> ออก Site (${isHoli ? 'วันหยุด' : 'วันธรรมดา'}): ${r.projectName}</b><br>
                     - ลักษณะงาน: ${r.taskDetail}<br>
                     - Site: ${r.site}<br>
                     ${compOffLine}
@@ -816,7 +880,7 @@
             compRecords.forEach((r) => {
                 html += `<div style="background:#dcfce7; padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid #bbf7d0;">
                     <b> วันหยุดชดเชย</b><br>
-                    - ชดเชยให้งาน: <b>${r.projectName}</b> (วันที่ไปทำ: ${r.date})
+                    - ชดเชยให้งาน: <b>${r.projectName}</b> (วันที่ไปทำ: ${normalizeDate(r.date)})
                 </div>`;
             });
             contentDiv.innerHTML = html;
@@ -849,7 +913,8 @@
 
         const now = new Date();
         const filtered = logs.filter(r => {
-            const rDate = new Date(r.date);
+            const norm = normalizeDate(r.date);
+            const rDate = new Date(norm);
             if (range === 'week') {
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(now.getDate() - 7);
@@ -862,8 +927,8 @@
                 const s = document.getElementById('dashStartDate').value;
                 const e = document.getElementById('dashEndDate').value;
                 let match = true;
-                if (s) match = match && r.date >= s;
-                if (e) match = match && r.date <= e;
+                if (s) match = match && norm >= s;
+                if (e) match = match && norm <= e;
                 return match;
             }
             return true;
@@ -912,7 +977,7 @@
         let logs = JSON.parse(localStorage.getItem('lantro_logs_v4') || '[]');
         if (logs.length === 0) { alert('ไม่มีข้อมูล'); return; }
         let csv = '\uFEFFวันที่,Project,Scope,Site,ระยะทาง,ค่าน้ำมัน,ทางด่วน,จอดรถ,ยอดสุทธิ\n';
-        logs.forEach(r => { csv += `${r.date},"${r.projectName}","${r.taskDetail}","${r.site}",${r.roundDist},${r.gasCost},${r.totalToll || 0},${r.parkCost || 0},${r.grandTotal}\n`; });
+        logs.forEach(r => { csv += `${normalizeDate(r.date)},"${r.projectName}","${r.taskDetail}","${r.site}",${r.roundDist},${r.gasCost},${r.totalToll || 0},${r.parkCost || 0},${r.grandTotal}\n`; });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -922,6 +987,7 @@
 
     function renderApp() {
         renderTable();
+        renderCalendarContent();
         updateDashboard();
     }
 </script>
